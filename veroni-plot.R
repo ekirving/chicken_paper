@@ -2,9 +2,8 @@
 # install.packages(c("sp", "maps", "maptools", "mapproj"), dependencies=TRUE)
 
 library(deldir)
-# library(rworldmap)
-require(maps)
-
+library(maps)
+library(mapdata)
 
 setwd("/Users/Evan/Dropbox/Code/chickens")
 
@@ -32,4 +31,5 @@ plot(tiles, fillcol=pts[,'BP'], showpoints=FALSE, add=TRUE, close=FALSE)
 points(pts$Longtitude, pts$Latitude, pch=20, cex=0.5, col="black")
 
 # plot the map
-map('world', interior=F, col='gray', add=T)
+map('world', interior=F, col='black', add=T)
+
