@@ -28,8 +28,11 @@ plot(pts$Longtitude, pts$Latitude, asp=1, type="n", bty="n", xlab="", ylab="", a
 plot(tiles, fillcol=pts[,'BP'], showpoints=FALSE, add=TRUE, close=FALSE)
 
 # add the points
-points(pts$Longtitude, pts$Latitude, pch=20, cex=0.5, col="black")
+points(pts$Longtitude, pts$Latitude, pch=20, cex=1, col="white")
+points(pts$Longtitude, pts$Latitude, pch=20, cex=0.5, col="red")
 
 # plot the map
 map('world', interior=F, col='black', add=T)
+
+
 
