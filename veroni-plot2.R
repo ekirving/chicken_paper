@@ -14,6 +14,9 @@ data <- read.csv("Chicken_Samples_Coordinates_OL_EIP.csv", header=T, strip.white
 # extract the necessary info, and drop samples with any missing data
 pts <- na.omit(data[c('Longtitude', 'Latitude', 'BP')])
 
+# create an ID column so uniquely identify each record
+pts['ID'] <- rownames(pts)
+
 # remove duplicate points
 pts <- pts %>% group_by(Longtitude, Latitude) %>% summarise(BP = max(BP))
 
@@ -39,7 +42,7 @@ SPointsDF_to_voronoi_SPolysDF <- function(sp) {
     }) -> vor_polygons
 
     # hopefully the caller passed in good metadata!
-    sp_dat <- sp@data
+    sp_dat <- as.data.frame(sp@data)
 
     # this way the IDs _should_ match up w/the data & voronoi polys
     rownames(sp_dat) <- sapply(slot(SpatialPolygons(vor_polygons), 'polygons'), slot, 'ID')
@@ -49,7 +52,6 @@ SPointsDF_to_voronoi_SPolysDF <- function(sp) {
 
 # get the veroni tessalation for the points
 vor.spdf <- SPointsDF_to_voronoi_SPolysDF(pts.spdf)
-vor_df <- fortify(vor.spdf)
 
 # fetch the map to use, and convert to SP
 map.obj <- map('world', fill=TRUE, plot=FALSE)
@@ -71,10 +73,11 @@ map.masked <- raster::intersect(vor.spdf, map.outline)
 # collapse the default margins
 par(mar=c(0,0,0,0))
 
-# dislay the map
-plot(map.masked)
+# render the map
+plt <- spplot(map.masked, zcol="BP", col=NA, col.regions=heat.colors(21)[1:20],
+              par.settings = list(panel.background=list(col="white")))
 
-# add the points
-points(pts$Longtitude, pts$Latitude, pch=20, cex=1, col="white")
-points(pts$Longtitude, pts$Latitude, pch=20, cex=0.5, col="red")
-
+# display the map
+spplot(map.masked, zcol="BP", col=NA, col.regions=heat.colors(20),
+       par.settings = list(panel.background=list(col="white")),
+       sp.layout = list("sp.points", pts.spdf, pch = 16, cex = 0.5, col = "black"))
