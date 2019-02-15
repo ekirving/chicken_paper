@@ -2,20 +2,27 @@
 # install.packages(c("sp", "maps", "maptools", "mapproj"), dependencies=TRUE)
 
 library(deldir)
+library(dplyr)
 library(maps)
 library(mapdata)
-require(dplyr)
+library(maptools)
+library(mapproj)
+library(rgeos)
+library(sp)
 
 setwd("/Users/Evan/Dropbox/Code/chickens")
 
 # import all the data
 data <- read.csv("Chicken_Samples_Coordinates_OL_EIP.csv", header=T, strip.white=TRUE, stringsAsFactors=FALSE)
 
+# create an ID column to uniquely identify each record
+data['ID'] <- rownames(data)
+
+# remove low quality dates
+data <- data[data$Confidence != 'No',]
+
 # extract the necessary info, and drop samples with any missing data
 pts <- na.omit(data[c('Longtitude', 'Latitude', 'BP')])
-
-# create an ID column so uniquely identify each record
-pts['ID'] <- rownames(pts)
 
 # remove duplicate points
 pts <- pts %>% group_by(Longtitude, Latitude) %>% summarise(BP = max(BP))
@@ -73,11 +80,7 @@ map.masked <- raster::intersect(vor.spdf, map.outline)
 # collapse the default margins
 par(mar=c(0,0,0,0))
 
-# render the map
-plt <- spplot(map.masked, zcol="BP", col=NA, col.regions=heat.colors(21)[1:20],
-              par.settings = list(panel.background=list(col="white")))
-
 # display the map
-spplot(map.masked, zcol="BP", col=NA, col.regions=heat.colors(20),
+spplot(map.masked, zcol="BP", col=NA, col.regions=heat.colors(21)[1:20],
        par.settings = list(panel.background=list(col="white")),
        sp.layout = list("sp.points", pts.spdf, pch = 16, cex = 0.5, col = "black"))
