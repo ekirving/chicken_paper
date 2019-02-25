@@ -9,8 +9,10 @@ library(sp)
 library(dplyr)
 library(ggplot2)
 library(automap)
+library(googlesheets)
 library(viridis)
 library(maps)
+library(mapdata)
 library(maptools)
 
 # ------------------------------------------------------------------------------
@@ -19,22 +21,31 @@ library(maptools)
 
 setwd("/Users/Evan/Dropbox/Code/chickens")
 
-# import all the data
-pts <- read.csv("Chicken_Samples_Coordinates_OL_EIP.csv", header=T,
-                strip.white=TRUE, stringsAsFactors=FALSE)
+# grab the data file
+gsheet <- gs_title("Chicken_Samples_Coordinates_OL_Jan2019")
+
+# get the tab containing the known data
+chickens <- gsheet %>% gs_read(ws = "Reviewed Jan 2019 (Good Chi)")
+
+# extract the relevant columns
+chickens <- chickens[c('Confidence', 'Lower Range BP', 'Upper Range BP', 'Latitude', 'Longtitude')]
+colnames(chickens) <- c('confidence', 'BP_low', 'BP_high', 'lat', 'long')
+
+# remove all the NA data
+chickens <- na.omit(chickens)
 
 # TODO remove low quality dates
-# pts <- pts[pts$Confidence != 'No',]
+# chickens <- chickens[chickens$Confidence != 'No',]
 
-# extract the necessary info, and drop samples with any missing data
-pts <- na.omit(pts[c('Latitude', 'Longtitude', 'BP')])
-colnames(pts) <- c('lat', 'long', 'BP')
+# cast the lat/long to numeric
+chickens$Latitude <- as.numeric(chickens$Latitude)
+chickens$Longtitude <- as.numeric(chickens$Longtitude)
 
 # remove duplicate points
-pts <- pts %>% group_by(lat, long) %>% summarise(BP = max(BP))
+chickens <- chickens %>% group_by(lat, long) %>% summarise(BP_low = max(BP_low), BP_high = min(BP_high))
 
 # convert to SpatialPointsDataFrame and add WGS84 long-lat projection
-pts <- SpatialPointsDataFrame(coords = pts[c('long','lat')], data = pts, proj4string=CRS("+init=epsg:4326"))
+pts <- SpatialPointsDataFrame(coords = chickens[c('long','lat')], data = chickens, proj4string=CRS("+init=epsg:4326"))
 
 # ------------------------------------------------------------------------------
 # make the raster grid to interpolate over
@@ -42,6 +53,11 @@ pts <- SpatialPointsDataFrame(coords = pts[c('long','lat')], data = pts, proj4st
 
 map.obj <- map('world', fill=TRUE, plot=FALSE)
 spdf <- map2SpatialPolygons(map.obj, IDs=map.obj$names)
+
+map.hires <- map("worldHires", plot=FALSE, fill=TRUE)
+spdf <- map2SpatialPolygons(map.hires, map.hires$names)
+# map.polygon <- rworldmap::getMap(resolution = "high")
+
 proj4string(spdf) <- CRS("+init=epsg:4326")  # WGS84 long-lat projection
 
 grd <- makegrid(spdf, n = 1e6)  # TODO make bigger for smoother surface
@@ -71,7 +87,7 @@ grd_pts_in_t <- spTransform(pts.grid, CRSobj = CRS("+init=epsg:3857"))
 # PbKrig <- autoKrige(BP~sqrt(abs(lat)), pts_t, grd_pts_in_t)
 # PbKrig <- autoKrige(BP~abs(lat),       pts_t, grd_pts_in_t)
 # PbKrig <- autoKrige(BP~lat,            pts_t, grd_pts_in_t)
-PbKrig <- autoKrige(BP~-abs(lat),            pts_t, grd_pts_in_t)
+PbKrig <- autoKrige(BP_low~-abs(lat),            pts_t, grd_pts_in_t)
 
 # # TODO find best formula
 # plot(autofitVariogram(BP~1, pts_t))
@@ -90,11 +106,10 @@ tmp <- spTransform(PbKrig$krige_output, CRSobj = CRS("+init=epsg:4326"))  # WGS8
 # TODO bound var1.pred at 0
 
 ggplot() +
-    # scale_fill_viridis(name = "Density", direction = -1) +
     geom_tile(data=as.data.frame(tmp), aes(x=long, y=lat, fill=var1.pred)) +
-    geom_point(data=as.data.frame(pts), aes(x=long, y=lat)) +
+    geom_point(data=as.data.frame(pts), aes(x=long, y=lat), colour='red') +
     # geom_text(data=as.data.frame(pts), aes(x=long, y=lat, label=BP),hjust=0, vjust=0) +
-    xlim(-25, 150) +
+    xlim(-25, 190) +
     ylim(-50, 80) +
     coord_equal() +
     scale_fill_viridis(name = "BP", na.value = 'gainsboro', option='viridis',
