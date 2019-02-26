@@ -3,3 +3,6 @@
 *.pdf
 *.png
 .httr-oauth
+.Rproj.user
+.RData
+*.RProj
