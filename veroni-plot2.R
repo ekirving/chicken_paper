@@ -10,6 +10,8 @@ library(mapproj)
 library(rgeos)
 library(sp)
 
+# TODO look at geom_voronoi_tile https://twitter.com/thomasp85/status/1100078451535552512
+
 setwd("/Users/Evan/Dropbox/Code/chickens")
 
 # import all the data
