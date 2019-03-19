@@ -15,11 +15,11 @@ library(maps, quietly = TRUE)
 library(mapdata, quietly = TRUE)
 library(maptools, quietly = TRUE)
 
+setwd("/Users/Evan/Dropbox/Code/chickens")
+
 # ------------------------------------------------------------------------------
 # import the chicken data and make the SpatialPointsDataFrame
 # ------------------------------------------------------------------------------
-
-setwd("/Users/Evan/Dropbox/Code/chickens")
 
 # grab the data file
 gsheet <- gs_title("Chicken_Samples_Coordinates_OL_Jan2019")
@@ -37,101 +37,91 @@ chickens <- na.omit(chickens)
 # TODO remove low quality dates
 # chickens <- chickens[chickens$Confidence != 'No',]
 
-# cast the lat/long to numeric
-# chickens$Latitude <- as.numeric(chickens$Latitude)
-# chickens$Longtitude <- as.numeric(chickens$Longtitude)
-
 # remove duplicate points
-chickens <- chickens %>% group_by(lat, long) %>% summarise(BP_low = max(BP_low), BP_high = min(BP_high))
+chickens <- chickens %>%
+    group_by(lat, long) %>%
+    summarise(BP_low = max(BP_low), BP_high = min(BP_high))
 
-# convert to SpatialPointsDataFrame and add WGS84 long-lat projection
-pts <- SpatialPointsDataFrame(coords = chickens[c('long','lat')], data = chickens, proj4string=CRS("+init=epsg:4326"))
-
-# ------------------------------------------------------------------------------
-# make the raster grid to interpolate over
-# ------------------------------------------------------------------------------
-
-# map.obj <- map('world', fill=TRUE, plot=FALSE)
-# spdf <- map2SpatialPolygons(map.obj, IDs=map.obj$names)
-# proj4string(spdf) <- CRS("+init=epsg:4326")  # WGS84 long-lat projection
-
-# map.hires <- map("worldHires", plot=FALSE, fill=TRUE)
-# spdf <- map2SpatialPolygons(map.hires, map.hires$names)
-# proj4string(spdf) <- CRS("+init=epsg:4326")  # WGS84 long-lat projection
-
-# get hires map of the world as spatial polygons
-spdf <- rworldmap::getMap(resolution = "high")
-
-grd <- makegrid(spdf, n = 1e6)  # TODO make bigger for smoother surface
-colnames(grd) <- c('long', 'lat')
-
-grd_pts <- SpatialPointsDataFrame(coords = grd, data = grd, proj4string=CRS(" +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"))
-
-# find all points in `grd_pts` that fall within `spdf`
-pts.grid <- grd_pts[spdf, ]
+# convert to SpatialPointsDataFrame and set standard WGS84 long-lat projection
+pts <- SpatialPointsDataFrame(coords = chickens[c('long','lat')],
+                              data = chickens, proj4string=CRS("+init=epsg:4326"))
 
 # ------------------------------------------------------------------------------
-# get the climate data
-# see https://www.gis-blog.com/r-raster-data-acquisition/
+# make a raster grid to interpolate over
 # ------------------------------------------------------------------------------
 
-# 2.5 = hires
-# climate <- raster::getData('worldclim', var='bio', res=2.5, path = 'raster')
+# # get a hires map of the world as spatial polygons
+# spdf <- rworldmap::getMap(resolution = "high")
+#
+# grd <- makegrid(spdf, n = 1e6)  # make 'n' bigger for a smoother surface
+# colnames(grd) <- c('long', 'lat')
+#
+# grd_pts <- SpatialPointsDataFrame(coords = grd, data = grd,
+#                                   proj4string=CRS(" +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"))
+#
+# # find all points in `grd_pts` that fall within `spdf`
+# pts.grid <- grd_pts[spdf, ]
+
+# ------------------------------------------------------------------------------
+# prepare a raster map of climate data
+# ------------------------------------------------------------------------------
+
+# resolution is measured in minutes of a degree (0.5, 2.5, 5, and 10)
 climate <- raster::getData('worldclim', var='bio', res=10, path = 'raster')
 
-# pts.grid.old <- pts.grid
+# get the climate layer we want, BIO1 = Annual Mean Temperature
+# see https://www.worldclim.org/bioclim
+climate.raster <- climate$bio1
 
-# pts.grid2 <- extract(climate$bio1, spdf)
-pts.grid <- rasterToPoints(climate$bio1, spatial=TRUE)
+# plot the climate map
+# plot(climate.raster)
 
-pts$bio1 <- extract(climate$bio1, pts)
+# convert the raster to a SpatialPointsDataFrame
+pts.grid <- raster::rasterToPoints(climate.raster, spatial=TRUE)
 
-# temp hack to get rid of NA values
+# assign climate values to out sample locations
+pts$bio1 <- raster::extract(climate.raster, pts)
+
+# TODO temp hack to get rid of NA values
 pts$bio1[is.na(pts$bio1)] <- 0
-
-# # BIO1 = Annual Mean Temperature
-# plot(climate$bio1, main="Annual Mean Temperature")
-#
-# library(stars)
-#
-# HS.stars <- st_as_stars(.x = climate$bio1)
-#
-# ggplot() +
-#     geom_stars(data = HS.stars)
-
-# ------------------------------------------------------------------------------
-# standardise the projection
-# ------------------------------------------------------------------------------
-
-# TODO is this really necessary?
-# Use EPSG: 3857 (Spherical Mercator)
-pts_t <- spTransform(pts, CRSobj = CRS("+init=epsg:3857"))
-grd_pts_in_t <- spTransform(pts.grid, CRSobj = CRS("+init=epsg:3857"))
 
 # ------------------------------------------------------------------------------
 # do the Kriging
 # see http://desktop.arcgis.com/en/arcmap/10.3/tools/3d-analyst-toolbox/how-kriging-works.htm
 # ------------------------------------------------------------------------------
 
-PbKrig <- autoKrige(BP_low ~ bio1 + abs(lat), pts_t, grd_pts_in_t)
+# Use EPSG: 3857 (Spherical Mercator) projection
+pts_t <- spTransform(pts, CRSobj = CRS("+init=epsg:3857"))
+grd_pts_in_t <- spTransform(pts.grid, CRSobj = CRS("+init=epsg:3857"))
 
 # TODO find best formula
-plot(autofitVariogram(BP_low ~ bio1, pts_t))
-plot(autofitVariogram(BP_low ~ bio1 + abs(lat), pts_t))
+krig.formula <- BP_low ~ bio1
+# krig.formula <- BP_low ~ bio1 + abs(lat)
+
+# plot the fit
+png(file=paste0('png/variogram-fit.png'), width=8, height=4, units='in', res=300)
+plot(autofitVariogram(krig.formula, pts_t))
+dev.off()
+
+# perform the Krigging
+chicken.krig <- autoKrige(krig.formula, pts_t, grd_pts_in_t)
+
+# convert back to lat/long
+krig.latlong <- spTransform(chicken.krig$krige_output, CRSobj = CRS("+init=epsg:4326"))
 
 # ------------------------------------------------------------------------------
 # plot the model
 # ------------------------------------------------------------------------------
 
-# convert back to lat/long
-tmp <- spTransform(PbKrig$krige_output, CRSobj = CRS("+init=epsg:4326"))  # WGS84 long-lat projection
 # TODO bound var1.pred at 0
-
 # TODO shift the baseline
 # tmp <- sp::recenter(tmp)
 
+# plot the map
+png(file=paste0('png/map-krige.png'), width=16, height=8, units='in', res=300)
 ggplot() +
-    geom_tile(data=as.data.frame(tmp), aes(x=x, y=y, fill=var1.pred)) +
+    geom_tile(data=as.data.frame(krig.latlong), aes(x=x, y=y, fill=var1.pred)) +
+    # geom_polygon(data=rworldmap::getMap(resolution = "high"), aes(x=long, y=lat)) +
     geom_point(data=as.data.frame(pts), aes(x=long, y=lat), colour='red') +
     # geom_text(data=as.data.frame(pts), aes(x=long, y=lat, label=BP),hjust=0, vjust=0) +
     # xlim(-125, 190) +
@@ -139,7 +129,7 @@ ggplot() +
     coord_equal() +
     scale_fill_viridis(name = "BP", na.value = 'gainsboro', option='viridis',
                        # direction=-1,
-        # rescale the color palette so the zero threshold is obvious
+        # TODO rescale the color palette so the zero threshold is obvious
         # values=rescale(c(-1, 0-.Machine$double.eps, 0, 0+.Machine$double.eps,1))
         limits=c(0, 3600)
         ) +
@@ -149,39 +139,4 @@ ggplot() +
 
     # make the legend tall so there is better color definition
     theme(legend.key.height = unit(x = 3, units = 'cm'))
-
-# ------------------------------------------------------------------------------
-#
-# # getData('ISO3')$ISO3[1:10]
-# # c('AFG', 'PAK')
-#
-# iso.list <- raster::getData('ISO3')$ISO3
-# # iso.list <- iso.list[!iso.list %in% c('XAD', 'AIA', 'ATA', 'BES', 'BVT', 'IOT', 'VGB', 'XCA', 'CXR', 'XCL', 'CCK')]
-# # raster.iso <- lapply(iso.list, function(iso) {
-# #     raster::getData(name = 'alt', country = iso, path = 'raster')
-# # })
-#
-# # get all the available raster files (lots are missing so suppress any errors)
-# raster.iso <- lapply(iso.list, function(iso) {
-#     tryCatch(
-#         raster::getData(name = 'alt', country = iso, path = 'raster'),
-#         error=function(e) NULL
-#     )
-# })
-#
-# # drop NULL values
-# raster.iso <- Filter(Negate(is.null), raster.iso)
-#
-# # overwrite overlapping regions
-# raster.iso$overwrite <- TRUE
-#
-# # perfomr the merge
-# # m <- do.call(merge, raster.iso)
-# m <- do.call(merge, unlist(raster.iso, recursive=FALSE))
-#
-# writeRaster(m, filename = "all-countries.tif")
-#
-# plot(m)
-#
-# # load the saved raster file
-# r <- raster("all-countries.tif")
+dev.off()
