@@ -15,7 +15,15 @@ library(maps, quietly = TRUE)
 library(mapdata, quietly = TRUE)
 library(maptools, quietly = TRUE)
 
-setwd("/Users/Evan/Dropbox/Code/chickens")
+# get the command line arguments
+args <- commandArgs(trailingOnly = TRUE)
+col <- args[1]
+bio <- args[2]
+
+# TODO remove when done testing
+# setwd("/Users/Evan/Dropbox/Code/chickens")
+# col <- 'BP_low'  # or 'BP_high'
+# bio <- 'bio1'    # or 'bio6', 'bio11'
 
 # ------------------------------------------------------------------------------
 # import the chicken data and make the SpatialPointsDataFrame
@@ -69,21 +77,24 @@ pts <- SpatialPointsDataFrame(coords = chickens[c('long','lat')],
 # resolution is measured in minutes of a degree (0.5, 2.5, 5, and 10)
 climate <- raster::getData('worldclim', var='bio', res=10, path = 'raster')
 
-# get the climate layer we want, BIO1 = Annual Mean Temperature
+# bio1  = Annual Mean Temperature (units °C * 10)
+# bio6  = Min Temperature of Coldest Month
+# bio11 = Mean Temperature of Coldest Quarter
 # see https://www.worldclim.org/bioclim
-climate.raster <- climate$bio1
 
 # plot the climate map
-# plot(climate.raster)
+png(file=paste0('png/', bio, '-map.png'), width=16, height=8, units='in', res=300)
+plot(climate[[bio]])
+dev.off()
 
 # convert the raster to a SpatialPointsDataFrame
-pts.grid <- raster::rasterToPoints(climate.raster, spatial=TRUE)
+pts.grid <- raster::rasterToPoints(climate[[bio]], spatial=TRUE)
 
-# assign climate values to out sample locations
-pts$bio1 <- raster::extract(climate.raster, pts)
+# assign climate values to the sample locations
+pts[[bio]] <- raster::extract(climate[[bio]], pts)
 
 # TODO temp hack to get rid of NA values
-pts$bio1[is.na(pts$bio1)] <- 0
+pts[[bio]][is.na(pts[[bio]])] <- 0
 
 # ------------------------------------------------------------------------------
 # do the Kriging
@@ -94,17 +105,18 @@ pts$bio1[is.na(pts$bio1)] <- 0
 pts_t <- spTransform(pts, CRSobj = CRS("+init=epsg:3857"))
 grd_pts_in_t <- spTransform(pts.grid, CRSobj = CRS("+init=epsg:3857"))
 
-# TODO find best formula
-krig.formula <- BP_low ~ bio1
-# krig.formula <- BP_low ~ bio1 + abs(lat)
+# compose the formula
+krig.formula <- as.formula(paste(col, '~', bio))
 
 # plot the fit
-png(file=paste0('png/variogram-fit.png'), width=8, height=4, units='in', res=300)
+png(file=paste0('png/', col, '-', bio, '-variogram.png'), width=8, height=4, units='in', res=300)
 plot(autofitVariogram(krig.formula, pts_t))
 dev.off()
 
 # perform the Krigging
 chicken.krig <- autoKrige(krig.formula, pts_t, grd_pts_in_t)
+
+plot(chicken.krig)
 
 # convert back to lat/long
 krig.latlong <- spTransform(chicken.krig$krige_output, CRSobj = CRS("+init=epsg:4326"))
@@ -118,7 +130,7 @@ krig.latlong <- spTransform(chicken.krig$krige_output, CRSobj = CRS("+init=epsg:
 # tmp <- sp::recenter(tmp)
 
 # plot the map
-png(file=paste0('png/map-krige.png'), width=16, height=8, units='in', res=300)
+png(file=paste0('png/', col, '-', bio, '-krige.png'), width=16, height=8, units='in', res=300)
 ggplot() +
     geom_tile(data=as.data.frame(krig.latlong), aes(x=x, y=y, fill=var1.pred)) +
     # geom_polygon(data=rworldmap::getMap(resolution = "high"), aes(x=long, y=lat)) +
