@@ -19,11 +19,13 @@ library(maptools, quietly = TRUE)
 args <- commandArgs(trailingOnly = TRUE)
 col <- args[1]
 bio <- args[2]
+stdev <- args[3]
 
 # TODO remove when done testing
 # setwd("/Users/Evan/Dropbox/Code/chickens")
 # col <- 'BP_low'  # or 'BP_high'
-# bio <- 'bio1'    # or 'bio6', 'bio11'
+# bio <- 'bio11'    # or 'bio6', 'bio11'
+# stdev <- 425
 
 # ------------------------------------------------------------------------------
 # import the chicken data and make the SpatialPointsDataFrame
@@ -93,7 +95,7 @@ pts.grid <- raster::rasterToPoints(climate[[bio]], spatial=TRUE)
 # assign climate values to the sample locations
 pts[[bio]] <- raster::extract(climate[[bio]], pts)
 
-# TODO temp hack to get rid of NA values
+# set any NA values to 0
 pts[[bio]][is.na(pts[[bio]])] <- 0
 
 # ------------------------------------------------------------------------------
@@ -116,18 +118,20 @@ dev.off()
 # perform the Krigging
 chicken.krig <- autoKrige(krig.formula, pts_t, grd_pts_in_t)
 
-plot(chicken.krig)
-
-# convert back to lat/long
+# convert back to lat/long before plotting
 krig.latlong <- spTransform(chicken.krig$krige_output, CRSobj = CRS("+init=epsg:4326"))
+
+# set any negative BP values to 0
+krig.latlong$var1.pred[krig.latlong$var1.pred < 0] <- 0
+
+# TODO shift the baseline
+
+# mask high standard error regions
+krig.latlong$var1.pred[krig.latlong$var1.stdev > stdev] <- NA
 
 # ------------------------------------------------------------------------------
 # plot the model
 # ------------------------------------------------------------------------------
-
-# TODO bound var1.pred at 0
-# TODO shift the baseline
-# tmp <- sp::recenter(tmp)
 
 # plot the map
 png(file=paste0('png/', col, '-', bio, '-krige.png'), width=16, height=8, units='in', res=300)
