@@ -27,6 +27,10 @@ stdev <- args[3]
 # bio <- 'bio11'    # or 'bio6', 'bio11'
 # stdev <- 425
 
+# limits for min/max displayed longitude
+xmin <- -20
+xmax <- 235
+
 # ------------------------------------------------------------------------------
 # import the chicken data and make the SpatialPointsDataFrame
 # ------------------------------------------------------------------------------
@@ -54,7 +58,8 @@ chickens <- chickens %>%
 
 # convert to SpatialPointsDataFrame and set standard WGS84 long-lat projection
 pts <- SpatialPointsDataFrame(coords = chickens[c('long','lat')],
-                              data = chickens, proj4string=CRS("+init=epsg:4326"))
+                              data = chickens[,-which(names(chickens) %in% c('long','lat'))],
+                              proj4string=CRS("+init=epsg:4326"))
 
 # ------------------------------------------------------------------------------
 # make a raster grid to interpolate over
@@ -124,35 +129,44 @@ krig.latlong <- spTransform(chicken.krig$krige_output, CRSobj = CRS("+init=epsg:
 # set any negative BP values to 0
 krig.latlong$var1.pred[krig.latlong$var1.pred < 0] <- 0
 
-# TODO shift the baseline
-
 # mask high standard error regions
 krig.latlong$var1.pred[krig.latlong$var1.stdev > stdev] <- NA
+
+# shift the framing of the map, so we can see the Pacific
+krig.latlong@coords[,'x'][krig.latlong$x < xmin] <- krig.latlong$x[krig.latlong$x < xmin] + 360
+pts@coords[,'long'][pts$long < xmin] <- pts$long[pts$long < xmin] + 360
 
 # ------------------------------------------------------------------------------
 # plot the model
 # ------------------------------------------------------------------------------
 
+# png(file=paste0('png/', col, '-', bio, '-krige.png'), width=16, height=8, units='in', res=300)
+
 # plot the map
-png(file=paste0('png/', col, '-', bio, '-krige.png'), width=16, height=8, units='in', res=300)
 ggplot() +
+
+    # the Krige surface
     geom_tile(data=as.data.frame(krig.latlong), aes(x=x, y=y, fill=var1.pred)) +
-    # geom_polygon(data=rworldmap::getMap(resolution = "high"), aes(x=long, y=lat)) +
+
+    # the sample locations
     geom_point(data=as.data.frame(pts), aes(x=long, y=lat), colour='red') +
+
+    # the dates of the sample locations
     # geom_text(data=as.data.frame(pts), aes(x=long, y=lat, label=BP),hjust=0, vjust=0) +
-    # xlim(-125, 190) +
-    # ylim(-50, 80) +
+
+    # set the limits of the x scale
+    scale_x_continuous(limits = c(xmin, xmax), expand = c(0, 0)) +
+
+    # use a fixed aspect ratio
     coord_equal() +
-    scale_fill_viridis(name = "BP", na.value = 'gainsboro', option='viridis',
-                       # direction=-1,
-        # TODO rescale the color palette so the zero threshold is obvious
-        # values=rescale(c(-1, 0-.Machine$double.eps, 0, 0+.Machine$double.eps,1))
-        limits=c(0, 3600)
-        ) +
+
+    # set the colour palette for the Krige surface
+    scale_fill_viridis(name = "BP", na.value = 'gainsboro', option='viridis') +
 
     # use minimal ggplot theme
     theme_bw() +
 
     # make the legend tall so there is better color definition
     theme(legend.key.height = unit(x = 3, units = 'cm'))
-dev.off()
+
+# dev.off()
