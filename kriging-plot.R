@@ -55,7 +55,14 @@ chickens <- na.omit(chickens)
 # remove duplicate points
 chickens <- chickens %>%
     group_by(lat, long) %>%
-    summarise(BP_low = max(BP_low), BP_high = min(BP_high))
+    slice(which.max(.data[[col]]))
+
+# thin the observations within a 5x5 grid
+chickens <- chickens %>%
+    mutate(lat.rnd = round(lat/5)*5, long.rnd = round(long/5)*5) %>%
+    group_by(lat.rnd, long.rnd) %>%
+    filter(.data[[col]] >= mean(.data[[col]]))  # keep everything older than the local mean
+    # slice(which.max(.data[[col]]))              # only keep the oldest
 
 # convert to SpatialPointsDataFrame and set standard WGS84 long-lat projection
 pts <- SpatialPointsDataFrame(coords = chickens[c('long','lat')],
@@ -141,7 +148,7 @@ pts@coords[,'long'][pts$long < xmin] <- pts$long[pts$long < xmin] + 360
 # plot the model
 # ------------------------------------------------------------------------------
 
-# png(file=paste0('png/', col, '-', bio, '-krige.png'), width=16, height=8, units='in', res=300)
+png(file=paste0('png/', col, '-', bio, '-krige.png'), width=16, height=8, units='in', res=300)
 
 # plot the map
 ggplot() +
@@ -150,8 +157,8 @@ ggplot() +
     geom_tile(data=as.data.frame(krig.latlong), aes(x=x, y=y, fill=var1.pred)) +
 
     # plot the sample locations as dots
-    geom_point(data=as.data.frame(pts), aes(x=long, y=lat),
-               shape = 21, size = 2, stroke = 1, colour = "red", fill="transparent") +
+    geom_point(data=as.data.frame(pts), aes(x=long, y=lat), colour = "red") +
+               # shape = 21, size = 2, stroke = 1, colour = "red", fill="transparent") +
 
     # plot the dates of the samples
     # geom_text_repel(data=as.data.frame(pts), aes_string(x='long', y='lat', label=col), hjust=0, vjust=0) +
@@ -173,4 +180,4 @@ ggplot() +
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank())
 
-# dev.off()
+dev.off()
