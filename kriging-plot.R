@@ -113,10 +113,11 @@ grd_pts_in_t <- spTransform(pts.grid, CRSobj = CRS("+init=epsg:3857"))
 # see http://desktop.arcgis.com/en/arcmap/10.3/tools/3d-analyst-toolbox/how-kriging-works.htm
 # ------------------------------------------------------------------------------
 
-PbKrig <- autoKrige(BP_low ~ bio1, pts_t, grd_pts_in_t)
+PbKrig <- autoKrige(BP_low ~ bio1 + abs(lat), pts_t, grd_pts_in_t)
 
 # TODO find best formula
-# plot(autofitVariogram(BP_low ~ abs(bio1), pts_t))
+plot(autofitVariogram(BP_low ~ bio1, pts_t))
+plot(autofitVariogram(BP_low ~ bio1 + abs(lat), pts_t))
 
 # ------------------------------------------------------------------------------
 # plot the model
@@ -150,37 +151,37 @@ ggplot() +
     theme(legend.key.height = unit(x = 3, units = 'cm'))
 
 # ------------------------------------------------------------------------------
-
-# getData('ISO3')$ISO3[1:10]
-# c('AFG', 'PAK')
-
-iso.list <- raster::getData('ISO3')$ISO3
-# iso.list <- iso.list[!iso.list %in% c('XAD', 'AIA', 'ATA', 'BES', 'BVT', 'IOT', 'VGB', 'XCA', 'CXR', 'XCL', 'CCK')]
+#
+# # getData('ISO3')$ISO3[1:10]
+# # c('AFG', 'PAK')
+#
+# iso.list <- raster::getData('ISO3')$ISO3
+# # iso.list <- iso.list[!iso.list %in% c('XAD', 'AIA', 'ATA', 'BES', 'BVT', 'IOT', 'VGB', 'XCA', 'CXR', 'XCL', 'CCK')]
+# # raster.iso <- lapply(iso.list, function(iso) {
+# #     raster::getData(name = 'alt', country = iso, path = 'raster')
+# # })
+#
+# # get all the available raster files (lots are missing so suppress any errors)
 # raster.iso <- lapply(iso.list, function(iso) {
-#     raster::getData(name = 'alt', country = iso, path = 'raster')
+#     tryCatch(
+#         raster::getData(name = 'alt', country = iso, path = 'raster'),
+#         error=function(e) NULL
+#     )
 # })
-
-# get all the available raster files (lots are missing so suppress any errors)
-raster.iso <- lapply(iso.list, function(iso) {
-    tryCatch(
-        raster::getData(name = 'alt', country = iso, path = 'raster'),
-        error=function(e) NULL
-    )
-})
-
-# drop NULL values
-raster.iso <- Filter(Negate(is.null), raster.iso)
-
-# overwrite overlapping regions
-raster.iso$overwrite <- TRUE
-
-# perfomr the merge
-# m <- do.call(merge, raster.iso)
-m <- do.call(merge, unlist(raster.iso, recursive=FALSE))
-
-writeRaster(m, filename = "all-countries.tif")
-
-plot(m)
-
-# load the saved raster file
-r <- raster("all-countries.tif")
+#
+# # drop NULL values
+# raster.iso <- Filter(Negate(is.null), raster.iso)
+#
+# # overwrite overlapping regions
+# raster.iso$overwrite <- TRUE
+#
+# # perfomr the merge
+# # m <- do.call(merge, raster.iso)
+# m <- do.call(merge, unlist(raster.iso, recursive=FALSE))
+#
+# writeRaster(m, filename = "all-countries.tif")
+#
+# plot(m)
+#
+# # load the saved raster file
+# r <- raster("all-countries.tif")
