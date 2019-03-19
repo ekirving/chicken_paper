@@ -71,10 +71,33 @@ grd_pts <- SpatialPointsDataFrame(coords = grd, data = grd, proj4string=CRS(" +p
 pts.grid <- grd_pts[spdf, ]
 
 # ------------------------------------------------------------------------------
-# merge the climate data
+# get the climate data
+# see https://www.gis-blog.com/r-raster-data-acquisition/
 # ------------------------------------------------------------------------------
 
-plot(pts.grid)
+# 2.5 = hires
+# climate <- raster::getData('worldclim', var='bio', res=2.5, path = 'raster')
+climate <- raster::getData('worldclim', var='bio', res=10, path = 'raster')
+
+# pts.grid.old <- pts.grid
+
+# pts.grid2 <- extract(climate$bio1, spdf)
+pts.grid <- rasterToPoints(climate$bio1, spatial=TRUE)
+
+pts$bio1 <- extract(climate$bio1, pts)
+
+# temp hack to get rid of NA values
+pts$bio1[is.na(pts$bio1)] <- 0
+
+# # BIO1 = Annual Mean Temperature
+# plot(climate$bio1, main="Annual Mean Temperature")
+#
+# library(stars)
+#
+# HS.stars <- st_as_stars(.x = climate$bio1)
+#
+# ggplot() +
+#     geom_stars(data = HS.stars)
 
 # ------------------------------------------------------------------------------
 # standardise the projection
@@ -90,10 +113,10 @@ grd_pts_in_t <- spTransform(pts.grid, CRSobj = CRS("+init=epsg:3857"))
 # see http://desktop.arcgis.com/en/arcmap/10.3/tools/3d-analyst-toolbox/how-kriging-works.htm
 # ------------------------------------------------------------------------------
 
-PbKrig <- autoKrige(BP_low ~ abs(lat), pts_t, grd_pts_in_t, verbose = T)
+PbKrig <- autoKrige(BP_low ~ bio1, pts_t, grd_pts_in_t)
 
 # TODO find best formula
-# plot(autofitVariogram(BP_low ~ abs(lat), pts_t))
+# plot(autofitVariogram(BP_low ~ abs(bio1), pts_t))
 
 # ------------------------------------------------------------------------------
 # plot the model
@@ -107,7 +130,7 @@ tmp <- spTransform(PbKrig$krige_output, CRSobj = CRS("+init=epsg:4326"))  # WGS8
 # tmp <- sp::recenter(tmp)
 
 ggplot() +
-    geom_tile(data=as.data.frame(tmp), aes(x=long, y=lat, fill=var1.pred)) +
+    geom_tile(data=as.data.frame(tmp), aes(x=x, y=y, fill=var1.pred)) +
     geom_point(data=as.data.frame(pts), aes(x=long, y=lat), colour='red') +
     # geom_text(data=as.data.frame(pts), aes(x=long, y=lat, label=BP),hjust=0, vjust=0) +
     # xlim(-125, 190) +
