@@ -14,6 +14,7 @@ library(viridis, quietly = TRUE)
 library(maps, quietly = TRUE)
 library(mapdata, quietly = TRUE)
 library(maptools, quietly = TRUE)
+library(ggrepel, quietly = TRUE)
 
 # get the command line arguments
 args <- commandArgs(trailingOnly = TRUE)
@@ -145,14 +146,15 @@ pts@coords[,'long'][pts$long < xmin] <- pts$long[pts$long < xmin] + 360
 # plot the map
 ggplot() +
 
-    # the Krige surface
+    # plot the Krige surface
     geom_tile(data=as.data.frame(krig.latlong), aes(x=x, y=y, fill=var1.pred)) +
 
-    # the sample locations
-    geom_point(data=as.data.frame(pts), aes(x=long, y=lat), colour='red') +
+    # plot the sample locations as dots
+    geom_point(data=as.data.frame(pts), aes(x=long, y=lat),
+               shape = 21, size = 2, stroke = 1, colour = "red", fill="transparent") +
 
-    # the dates of the sample locations
-    # geom_text(data=as.data.frame(pts), aes(x=long, y=lat, label=BP),hjust=0, vjust=0) +
+    # plot the dates of the samples
+    # geom_text_repel(data=as.data.frame(pts), aes_string(x='long', y='lat', label=col), hjust=0, vjust=0) +
 
     # set the limits of the x scale
     scale_x_continuous(limits = c(xmin, xmax), expand = c(0, 0)) +
@@ -167,6 +169,8 @@ ggplot() +
     theme_bw() +
 
     # make the legend tall so there is better color definition
-    theme(legend.key.height = unit(x = 3, units = 'cm'))
+    theme(legend.key.height = unit(x = 3, units = 'cm'),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
 
 # dev.off()
