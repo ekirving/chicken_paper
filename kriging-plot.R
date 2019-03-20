@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-# code from...
+# inspiration from...
 # https://rpubs.com/nabilabd/118172
 # http://rstudio-pubs-static.s3.amazonaws.com/80464_9156596afb2e4dcda53e3650a68df82a.html
 # https://stackoverflow.com/questions/43436466/create-grid-in-r-for-kriging-in-gstat/43444232#answer-45948442
@@ -196,6 +196,41 @@ ggplot() +
 
     # set the colour palette for the Krige surface
     scale_fill_viridis(name = "BP", na.value = 'gainsboro', option='viridis') +
+
+    # use minimal ggplot theme
+    theme_bw() +
+
+    # make the legend tall so there is better color definition
+    theme(legend.key.height = unit(x = 3, units = 'cm'),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+
+dev.off()
+
+# ------------------------------------------------------------------------------
+# plot the standard error
+# ------------------------------------------------------------------------------
+
+png(file=paste0('png/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', res, '-stderr.png'), width=16, height=8, units='in', res=300)
+
+# plot the map
+ggplot() +
+
+    # plot the Krige surface
+    geom_tile(data=as.data.frame(krig.latlong), aes(x=x, y=y, fill=var1.stdev)) +
+
+    # plot the samples used for the Kriging
+    geom_point(data=as.data.frame(pts), aes(x=long, y=lat), colour = "red") +
+
+    # set the limits of the scales
+    scale_x_continuous(limits = c(xmin, xmax), expand = c(0, 0)) +
+    scale_y_continuous(limits = c(ymin, ymax), expand = c(0, 0)) +
+
+    # use a fixed aspect ratio
+    coord_equal() +
+
+    # set the colour palette for the Krige surface
+    scale_fill_viridis(name = "stderr", na.value = 'gainsboro', option='plasma') +
 
     # use minimal ggplot theme
     theme_bw() +
