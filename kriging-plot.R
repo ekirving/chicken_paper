@@ -18,12 +18,12 @@ library(ggrepel, quietly = TRUE)
 
 # get the command line arguments
 args <- commandArgs(trailingOnly = TRUE)
-col <- args[1]  # column in the google sheet to use as the date ('BP_low' or 'BP_high')
-hiq <- args[2]  # drop low confidence samples
-grd <- args[3]  # size (in degrees) of the thinning grid
-bio <- args[4]  # bioclimate variable to use for interpolation ('bio1', 'bio6', 'bio11')
-res <- args[5]  # size (in minutes) of a raster tile  (0.5, 2.5, 5, and 10)
-err <- args[6]  # maximum standard error in the model to display
+col <- args[1]              # column in the google sheet to use as the date ('BP_low' or 'BP_high')
+hiq <- as.numeric(args[2])  # drop low confidence samples
+grd <- as.numeric(args[3])  # size (in degrees) of the thinning grid
+bio <- args[4]              # bioclimate variable to use for interpolation ('bio1', 'bio6', 'bio11')
+res <- as.numeric(args[5])  # size (in minutes) of a raster tile  (0.5, 2.5, 5, and 10)
+err <- as.numeric(args[6])  # maximum standard error in the model to display
 
 # TODO remove when done testing
 # setwd("/Users/Evan/Dropbox/Code/chickens")
@@ -57,15 +57,16 @@ colnames(samples) <- c('confidence', 'BP_low', 'BP_high', 'lat', 'long')
 # remove all the NA data
 samples <- na.omit(samples)
 
-# remove low quality dates
-if (strtoi(hiq)) {
+# remove low quality samples
+if (hiq) {
     samples <- samples[samples$confidence != 'No',]
 }
 
-# remove duplicate points
+# remove duplicate points (keep the oldest)
 samples <- samples %>%
     group_by(lat, long) %>%
-    slice(which.max(.data[[col]]))
+    slice(which.max(.data[[col]])) %>%
+    ungroup()
 
 # only keep the oldest samples within an X*X grid
 samples.thin <- samples %>%
