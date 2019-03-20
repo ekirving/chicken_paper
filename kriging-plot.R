@@ -19,14 +19,16 @@ library(ggrepel, quietly = TRUE)
 # get the command line arguments
 args <- commandArgs(trailingOnly = TRUE)
 col <- args[1]  # column in the google sheet to use as the date ('BP_low' or 'BP_high')
-grd <- args[2]  # size (in degrees) of the thinning grid
-bio <- args[3]  # bioclimate variable to use for interpolation ('bio1', 'bio6', 'bio11')
-res <- args[4]  # size (in minutes) of a raster tile  (0.5, 2.5, 5, and 10)
-err <- args[5]  # maximum standard error in the model to display
+hiq <- args[2]  # drop low confidence samples
+grd <- args[3]  # size (in degrees) of the thinning grid
+bio <- args[4]  # bioclimate variable to use for interpolation ('bio1', 'bio6', 'bio11')
+res <- args[5]  # size (in minutes) of a raster tile  (0.5, 2.5, 5, and 10)
+err <- args[6]  # maximum standard error in the model to display
 
 # TODO remove when done testing
 # setwd("/Users/Evan/Dropbox/Code/chickens")
 # col <- 'BP_low'
+# hiq <- 0
 # grd <- 10
 # bio <- 'bio11'
 # res <- 10
@@ -55,8 +57,10 @@ colnames(samples) <- c('confidence', 'BP_low', 'BP_high', 'lat', 'long')
 # remove all the NA data
 samples <- na.omit(samples)
 
-# TODO remove low quality dates
-# samples <- samples[samples$Confidence != 'No',]
+# remove low quality dates
+if (strtoi(hiq)) {
+    samples <- samples[samples$confidence != 'No',]
+}
 
 # remove duplicate points
 samples <- samples %>%
@@ -80,10 +84,6 @@ samples.drop <- anti_join(samples, samples.thin)
 # convert to SpatialPointsDataFrame and set standard WGS84 long-lat projection
 pts <- SpatialPointsDataFrame(coords = samples.thin[c('long','lat')],
                               data = samples.thin[,-which(names(samples.thin) %in% c('long','lat'))],
-                              proj4string=CRS("+init=epsg:4326"))
-
-drp <- SpatialPointsDataFrame(coords = samples.drop[c('long','lat')],
-                              data = samples.drop[,-which(names(samples.thin) %in% c('long','lat'))],
                               proj4string=CRS("+init=epsg:4326"))
 
 # ------------------------------------------------------------------------------
@@ -141,7 +141,7 @@ grd_pts_in_t <- spTransform(pts.grid, CRSobj = CRS("+init=epsg:3857"))
 krig.formula <- as.formula(paste(col, '~', bio))
 
 # plot the fit
-png(file=paste0('png/', col, '-grd', grd, '-', bio, '-res', res, '-variogram.png'), width=8, height=4, units='in', res=300)
+png(file=paste0('png/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', res, '-variogram.png'), width=8, height=4, units='in', res=300)
 plot(autofitVariogram(krig.formula, pts_t))
 dev.off()
 
@@ -161,13 +161,13 @@ krig.latlong$var1.pred[krig.latlong$var1.stdev > err] <- NA
 # shift the framing of the map, so we can see the Pacific
 krig.latlong@coords[,'x'][krig.latlong$x < xmin] <- krig.latlong$x[krig.latlong$x < xmin] + 360
 pts@coords[,'long'][pts$long < xmin] <- pts$long[pts$long < xmin] + 360
-drp@coords[,'long'][drp$long < xmin] <- drp$long[drp$long < xmin] + 360
+samples.drop$long[samples.drop$long < xmin] <- samples.drop$long[samples.drop$long < xmin] + 360
 
 # ------------------------------------------------------------------------------
 # plot the model
 # ------------------------------------------------------------------------------
 
-png(file=paste0('png/', col, '-grd', grd, '-', bio, '-res', res, '-krige.png'), width=16, height=8, units='in', res=300)
+png(file=paste0('png/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', res, '-krige.png'), width=16, height=8, units='in', res=300)
 
 # plot the map
 ggplot() +
@@ -176,7 +176,7 @@ ggplot() +
     geom_tile(data=as.data.frame(krig.latlong), aes(x=x, y=y, fill=var1.pred)) +
 
     # plot the unused samples first
-    geom_point(data=as.data.frame(drp), aes(x=long, y=lat), colour = "grey") +
+    geom_point(data=samples.drop, aes(x=long, y=lat), colour = "grey") +
 
     # plot the samples used for the Kriging
     geom_point(data=as.data.frame(pts), aes(x=long, y=lat), colour = "red") +
