@@ -18,19 +18,23 @@ library(ggrepel, quietly = TRUE)
 
 # get the command line arguments
 args <- commandArgs(trailingOnly = TRUE)
-col <- args[1]
-bio <- args[2]
-stdev <- args[3]
+col <- args[1]    # column in the google sheet to use as the date ('BP_low' or 'BP_high')
+bio <- args[2]    # bioclimate variable to use for interpolation ('bio1', 'bio6', 'bio11')
+res <- args[3]    # resolution of the interpolation surface (0.5, 2.5, 5, and 10)
+stdev <- args[4]  # maximum standard error in the model to display
 
 # TODO remove when done testing
 # setwd("/Users/Evan/Dropbox/Code/chickens")
-# col <- 'BP_low'  # or 'BP_high'
-# bio <- 'bio11'    # or 'bio6', 'bio11'
+# col <- 'BP_low'
+# bio <- 'bio11'
+# res <- 10
 # stdev <- 425
 
 # limits for min/max displayed longitude
 xmin <- -20
 xmax <- 235
+
+# TODO define min/max for latitude
 
 # ------------------------------------------------------------------------------
 # import the chicken data and make the SpatialPointsDataFrame
@@ -70,7 +74,7 @@ pts <- SpatialPointsDataFrame(coords = chickens[c('long','lat')],
                               proj4string=CRS("+init=epsg:4326"))
 
 # ------------------------------------------------------------------------------
-# make a raster grid to interpolate over
+# option 1: make a raster grid to interpolate over
 # ------------------------------------------------------------------------------
 
 # # get a hires map of the world as spatial polygons
@@ -86,7 +90,7 @@ pts <- SpatialPointsDataFrame(coords = chickens[c('long','lat')],
 # pts.grid <- grd_pts[spdf, ]
 
 # ------------------------------------------------------------------------------
-# prepare a raster map of climate data
+# option 2: fetch a raster map containing climate data to interpolate over
 # ------------------------------------------------------------------------------
 
 # resolution is measured in minutes of a degree (0.5, 2.5, 5, and 10)
@@ -161,7 +165,8 @@ ggplot() +
                # shape = 21, size = 2, stroke = 1, colour = "red", fill="transparent") +
 
     # plot the dates of the samples
-    # geom_text_repel(data=as.data.frame(pts), aes_string(x='long', y='lat', label=col), hjust=0, vjust=0) +
+    geom_text_repel(data=as.data.frame(pts),
+                    aes_string(x='long', y='lat', label=col), hjust=0, vjust=0) +
 
     # set the limits of the x scale
     scale_x_continuous(limits = c(xmin, xmax), expand = c(0, 0)) +
