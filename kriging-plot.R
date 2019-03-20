@@ -41,7 +41,7 @@ ymin <- -55
 ymax <-  85
 
 # ------------------------------------------------------------------------------
-# import the chicken data and make the SpatialPointsDataFrame
+# import the sample data and make the SpatialPointsDataFrame
 # ------------------------------------------------------------------------------
 
 # grab the data file
@@ -139,10 +139,10 @@ dev.off()
 
 # TODO check universal kriging
 # perform the Kriging
-chicken.krig <- autoKrige(krig.formula, pts_t, grd_pts_in_t)
+samples.krig <- autoKrige(krig.formula, pts_t, grd_pts_in_t)
 
 # convert back to lat/long before plotting
-krig.latlong <- spTransform(chicken.krig$krige_output, CRSobj = CRS("+init=epsg:4326"))
+krig.latlong <- spTransform(samples.krig$krige_output, CRSobj = CRS("+init=epsg:4326"))
 
 # set any negative BP values to 0
 krig.latlong$var1.pred[krig.latlong$var1.pred < 0] <- 0
