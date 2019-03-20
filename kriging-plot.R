@@ -30,13 +30,11 @@ err <- args[5]  # maximum standard error in the model to display
 # grd <- 10
 # bio <- 'bio11'
 # res <- 10
-# err <- 425
+# err <- 1000
 
-# limits for min/max displayed longitude
+# min/max limits for the lat/long of the map
 xmin <- -20
 xmax <- 235
-
-# TODO define min/max for latitude
 ymin <- -55
 ymax <-  85
 
@@ -65,17 +63,27 @@ samples <- samples %>%
     group_by(lat, long) %>%
     slice(which.max(.data[[col]]))
 
-# thin the observations within a x*x grid
-samples <- samples %>%
+# only keep the oldest samples within an X*X grid
+samples.thin <- samples %>%
     mutate(lat.rnd = round(lat/grd)*grd, long.rnd = round(long/grd)*grd) %>%
     group_by(lat.rnd, long.rnd) %>%
-    slice(which.max(.data[[col]]))  # only keep the oldest
+    slice(which.max(.data[[col]])) %>%
+    ungroup() %>%
+    select(-one_of('lat.rnd', 'long.rnd'))
+
     # filter(.data[[col]] >= mean(.data[[col]]))       # older than the local mean
     # filter(.data[[col]] >= max(.data[[col]]) - 100)  # within 100 of the local max
 
+# get all the dropped samples
+samples.drop <- anti_join(samples, samples.thin)
+
 # convert to SpatialPointsDataFrame and set standard WGS84 long-lat projection
-pts <- SpatialPointsDataFrame(coords = samples[c('long','lat')],
-                              data = samples[,-which(names(samples) %in% c('long','lat'))],
+pts <- SpatialPointsDataFrame(coords = samples.thin[c('long','lat')],
+                              data = samples.thin[,-which(names(samples.thin) %in% c('long','lat'))],
+                              proj4string=CRS("+init=epsg:4326"))
+
+drp <- SpatialPointsDataFrame(coords = samples.drop[c('long','lat')],
+                              data = samples.drop[,-which(names(samples.thin) %in% c('long','lat'))],
                               proj4string=CRS("+init=epsg:4326"))
 
 # ------------------------------------------------------------------------------
@@ -137,7 +145,7 @@ png(file=paste0('png/', col, '-grd', grd, '-', bio, '-res', res, '-variogram.png
 plot(autofitVariogram(krig.formula, pts_t))
 dev.off()
 
-# TODO check universal kriging
+# TODO check [using universal kriging]
 # perform the Kriging
 samples.krig <- autoKrige(krig.formula, pts_t, grd_pts_in_t)
 
@@ -153,6 +161,7 @@ krig.latlong$var1.pred[krig.latlong$var1.stdev > err] <- NA
 # shift the framing of the map, so we can see the Pacific
 krig.latlong@coords[,'x'][krig.latlong$x < xmin] <- krig.latlong$x[krig.latlong$x < xmin] + 360
 pts@coords[,'long'][pts$long < xmin] <- pts$long[pts$long < xmin] + 360
+drp@coords[,'long'][drp$long < xmin] <- drp$long[drp$long < xmin] + 360
 
 # ------------------------------------------------------------------------------
 # plot the model
@@ -166,11 +175,14 @@ ggplot() +
     # plot the Krige surface
     geom_tile(data=as.data.frame(krig.latlong), aes(x=x, y=y, fill=var1.pred)) +
 
-    # plot the sample locations as dots
+    # plot the unused samples first
+    geom_point(data=as.data.frame(drp), aes(x=long, y=lat), colour = "grey") +
+
+    # plot the samples used for the Kriging
     geom_point(data=as.data.frame(pts), aes(x=long, y=lat), colour = "red") +
                # shape = 21, size = 2, stroke = 1, colour = "red", fill="transparent") +
 
-    # plot the dates of the samples
+    # plot the dates of the samples used for Kriging
     geom_text_repel(data=as.data.frame(pts),
                     aes_string(x='long', y='lat', label=col), hjust=0, vjust=0) +
 
