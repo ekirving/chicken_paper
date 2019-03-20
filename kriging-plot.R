@@ -71,16 +71,17 @@ samples <- samples %>%
     slice(which.max(.data[[col]])) %>%
     ungroup()
 
-# only keep the oldest samples within an X*X grid
+# thin the samples within an X*X grid
 samples.thin <- samples %>%
     mutate(lat.rnd = round(lat/grd)*grd, long.rnd = round(long/grd)*grd) %>%
     group_by(lat.rnd, long.rnd) %>%
-    slice(which.max(.data[[col]])) %>%
+    mutate(label = ifelse(.data[[col]] < max(.data[[col]]), NA, .data[[col]])) %>%
+    filter(.data[[col]] >= (max(.data[[col]]) - 250))  %>%
     ungroup() %>%
     select(-one_of('lat.rnd', 'long.rnd'))
 
+    # slice(which.max(.data[[col]])) %>%
     # filter(.data[[col]] >= mean(.data[[col]]))       # older than the local mean
-    # filter(.data[[col]] >= max(.data[[col]]) - 100)  # within 100 of the local max
 
 # get all the dropped samples
 samples.drop <- anti_join(samples, samples.thin)
@@ -188,7 +189,7 @@ ggplot() +
 
     # plot the dates of the samples used for Kriging
     geom_text_repel(data=as.data.frame(pts),
-                    aes_string(x='long', y='lat', label=col), hjust=0, vjust=0) +
+                    aes_string(x='long', y='lat', label='label'), hjust=0, vjust=0) +
 
     # set the limits of the scales
     scale_x_continuous(limits = c(xmin, xmax), expand = c(0, 0)) +
