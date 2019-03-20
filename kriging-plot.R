@@ -54,6 +54,9 @@ samples <- gsheet %>% gs_read(ws = "Reviewed Jan 2019 (Good Chi)")
 samples <- samples[c('Confidence', 'Lower Range BP', 'Upper Range BP', 'Latitude', 'Longtitude')]
 colnames(samples) <- c('confidence', 'BP_low', 'BP_high', 'lat', 'long')
 
+# find the oldest sample
+max.age <- max(samples[,col])
+
 # remove all the NA data
 samples <- na.omit(samples)
 
@@ -116,7 +119,7 @@ climate <- raster::getData('worldclim', var='bio', res=res, path='raster')
 # see https://www.worldclim.org/bioclim
 
 # plot the climate map
-png(file=paste0('png/', bio, '-res', res, '-map.png'), width=16, height=8, units='in', res=300)
+png(file=paste0('png/bio/', bio, '-res', res, '-map.png'), width=16, height=8, units='in', res=300)
 plot(climate[[bio]])
 dev.off()
 
@@ -142,7 +145,7 @@ grd_pts_in_t <- spTransform(pts.grid, CRSobj = CRS("+init=epsg:3857"))
 krig.formula <- as.formula(paste(col, '~', bio))
 
 # plot the fit
-png(file=paste0('png/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', res, '-variogram.png'), width=8, height=4, units='in', res=300)
+png(file=paste0('png/vario/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', res, '-variogram.png'), width=8, height=4, units='in', res=300)
 plot(autofitVariogram(krig.formula, pts_t))
 dev.off()
 
@@ -168,7 +171,7 @@ samples.drop$long[samples.drop$long < xmin] <- samples.drop$long[samples.drop$lo
 # plot the model
 # ------------------------------------------------------------------------------
 
-png(file=paste0('png/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', res, '-krige.png'), width=16, height=8, units='in', res=300)
+png(file=paste0('png/krige/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', res, '-krige.png'), width=16, height=8, units='in', res=300)
 
 # plot the map
 ggplot() +
@@ -195,7 +198,8 @@ ggplot() +
     coord_equal() +
 
     # set the colour palette for the Krige surface
-    scale_fill_viridis(name = "BP", na.value = 'gainsboro', option='viridis') +
+    scale_fill_viridis(name = "BP", na.value = 'gainsboro', option='viridis',
+                       limits = c(0, max.age)) +
 
     # use minimal ggplot theme
     theme_bw() +
@@ -211,7 +215,7 @@ dev.off()
 # plot the standard error
 # ------------------------------------------------------------------------------
 
-png(file=paste0('png/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', res, '-stderr.png'), width=16, height=8, units='in', res=300)
+png(file=paste0('png/stderr/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', res, '-stderr.png'), width=16, height=8, units='in', res=300)
 
 # plot the map
 ggplot() +
@@ -230,7 +234,8 @@ ggplot() +
     coord_equal() +
 
     # set the colour palette for the Krige surface
-    scale_fill_viridis(name = "stderr", na.value = 'gainsboro', option='plasma') +
+    scale_fill_viridis(name = "stderr", na.value = 'gainsboro', option='plasma',
+                       limits = c(200, 1200)) +
 
     # use minimal ggplot theme
     theme_bw() +

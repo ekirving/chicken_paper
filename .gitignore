@@ -1,9 +1,9 @@
 # Add any directories, files, or patterns you don't want to be tracked by version control
 .Rhistory
-*.pdf
-*.png
 .httr-oauth
 .Rproj.user
 .RData
 *.RProj
 raster/*
+_old_
+*cmd.sh
