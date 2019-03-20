@@ -18,23 +18,27 @@ library(ggrepel, quietly = TRUE)
 
 # get the command line arguments
 args <- commandArgs(trailingOnly = TRUE)
-col <- args[1]    # column in the google sheet to use as the date ('BP_low' or 'BP_high')
-bio <- args[2]    # bioclimate variable to use for interpolation ('bio1', 'bio6', 'bio11')
-res <- args[3]    # resolution of the interpolation surface (0.5, 2.5, 5, and 10)
-stdev <- args[4]  # maximum standard error in the model to display
+col <- args[1]  # column in the google sheet to use as the date ('BP_low' or 'BP_high')
+grd <- args[2]  # size (in degrees) of the thinning grid
+bio <- args[3]  # bioclimate variable to use for interpolation ('bio1', 'bio6', 'bio11')
+res <- args[4]  # size (in minutes) of a raster tile  (0.5, 2.5, 5, and 10)
+err <- args[5]  # maximum standard error in the model to display
 
 # TODO remove when done testing
 # setwd("/Users/Evan/Dropbox/Code/chickens")
 # col <- 'BP_low'
+# grd <- 10
 # bio <- 'bio11'
 # res <- 10
-# stdev <- 425
+# err <- 425
 
 # limits for min/max displayed longitude
 xmin <- -20
 xmax <- 235
 
 # TODO define min/max for latitude
+ymin <- -55
+ymax <-  85
 
 # ------------------------------------------------------------------------------
 # import the chicken data and make the SpatialPointsDataFrame
@@ -44,33 +48,34 @@ xmax <- 235
 gsheet <- gs_title("Chicken_Samples_Coordinates_OL_Jan2019")
 
 # get the tab containing the known data
-chickens <- gsheet %>% gs_read(ws = "Reviewed Jan 2019 (Good Chi)")
+samples <- gsheet %>% gs_read(ws = "Reviewed Jan 2019 (Good Chi)")
 
 # extract the relevant columns
-chickens <- chickens[c('Confidence', 'Lower Range BP', 'Upper Range BP', 'Latitude', 'Longtitude')]
-colnames(chickens) <- c('confidence', 'BP_low', 'BP_high', 'lat', 'long')
+samples <- samples[c('Confidence', 'Lower Range BP', 'Upper Range BP', 'Latitude', 'Longtitude')]
+colnames(samples) <- c('confidence', 'BP_low', 'BP_high', 'lat', 'long')
 
 # remove all the NA data
-chickens <- na.omit(chickens)
+samples <- na.omit(samples)
 
 # TODO remove low quality dates
-# chickens <- chickens[chickens$Confidence != 'No',]
+# samples <- samples[samples$Confidence != 'No',]
 
 # remove duplicate points
-chickens <- chickens %>%
+samples <- samples %>%
     group_by(lat, long) %>%
     slice(which.max(.data[[col]]))
 
-# thin the observations within a 5x5 grid
-chickens <- chickens %>%
-    mutate(lat.rnd = round(lat/5)*5, long.rnd = round(long/5)*5) %>%
+# thin the observations within a x*x grid
+samples <- samples %>%
+    mutate(lat.rnd = round(lat/grd)*grd, long.rnd = round(long/grd)*grd) %>%
     group_by(lat.rnd, long.rnd) %>%
-    filter(.data[[col]] >= mean(.data[[col]]))  # keep everything older than the local mean
-    # slice(which.max(.data[[col]]))              # only keep the oldest
+    slice(which.max(.data[[col]]))  # only keep the oldest
+    # filter(.data[[col]] >= mean(.data[[col]]))       # older than the local mean
+    # filter(.data[[col]] >= max(.data[[col]]) - 100)  # within 100 of the local max
 
 # convert to SpatialPointsDataFrame and set standard WGS84 long-lat projection
-pts <- SpatialPointsDataFrame(coords = chickens[c('long','lat')],
-                              data = chickens[,-which(names(chickens) %in% c('long','lat'))],
+pts <- SpatialPointsDataFrame(coords = samples[c('long','lat')],
+                              data = samples[,-which(names(samples) %in% c('long','lat'))],
                               proj4string=CRS("+init=epsg:4326"))
 
 # ------------------------------------------------------------------------------
@@ -94,7 +99,7 @@ pts <- SpatialPointsDataFrame(coords = chickens[c('long','lat')],
 # ------------------------------------------------------------------------------
 
 # resolution is measured in minutes of a degree (0.5, 2.5, 5, and 10)
-climate <- raster::getData('worldclim', var='bio', res=10, path = 'raster')
+climate <- raster::getData('worldclim', var='bio', res=res, path='raster')
 
 # bio1  = Annual Mean Temperature (units °C * 10)
 # bio6  = Min Temperature of Coldest Month
@@ -102,7 +107,7 @@ climate <- raster::getData('worldclim', var='bio', res=10, path = 'raster')
 # see https://www.worldclim.org/bioclim
 
 # plot the climate map
-png(file=paste0('png/', bio, '-map.png'), width=16, height=8, units='in', res=300)
+png(file=paste0('png/', bio, '-res', res, '-map.png'), width=16, height=8, units='in', res=300)
 plot(climate[[bio]])
 dev.off()
 
@@ -116,7 +121,7 @@ pts[[bio]] <- raster::extract(climate[[bio]], pts)
 pts[[bio]][is.na(pts[[bio]])] <- 0
 
 # ------------------------------------------------------------------------------
-# do the Kriging
+# perform the Kriging
 # see http://desktop.arcgis.com/en/arcmap/10.3/tools/3d-analyst-toolbox/how-kriging-works.htm
 # ------------------------------------------------------------------------------
 
@@ -124,15 +129,16 @@ pts[[bio]][is.na(pts[[bio]])] <- 0
 pts_t <- spTransform(pts, CRSobj = CRS("+init=epsg:3857"))
 grd_pts_in_t <- spTransform(pts.grid, CRSobj = CRS("+init=epsg:3857"))
 
-# compose the formula
+# compose the Kriging formula (e.g. date is dependent on climate variable)
 krig.formula <- as.formula(paste(col, '~', bio))
 
 # plot the fit
-png(file=paste0('png/', col, '-', bio, '-variogram.png'), width=8, height=4, units='in', res=300)
+png(file=paste0('png/', col, '-grd', grd, '-', bio, '-res', res, '-variogram.png'), width=8, height=4, units='in', res=300)
 plot(autofitVariogram(krig.formula, pts_t))
 dev.off()
 
-# perform the Krigging
+# TODO check universal kriging
+# perform the Kriging
 chicken.krig <- autoKrige(krig.formula, pts_t, grd_pts_in_t)
 
 # convert back to lat/long before plotting
@@ -142,7 +148,7 @@ krig.latlong <- spTransform(chicken.krig$krige_output, CRSobj = CRS("+init=epsg:
 krig.latlong$var1.pred[krig.latlong$var1.pred < 0] <- 0
 
 # mask high standard error regions
-krig.latlong$var1.pred[krig.latlong$var1.stdev > stdev] <- NA
+krig.latlong$var1.pred[krig.latlong$var1.stdev > err] <- NA
 
 # shift the framing of the map, so we can see the Pacific
 krig.latlong@coords[,'x'][krig.latlong$x < xmin] <- krig.latlong$x[krig.latlong$x < xmin] + 360
@@ -152,7 +158,7 @@ pts@coords[,'long'][pts$long < xmin] <- pts$long[pts$long < xmin] + 360
 # plot the model
 # ------------------------------------------------------------------------------
 
-png(file=paste0('png/', col, '-', bio, '-krige.png'), width=16, height=8, units='in', res=300)
+png(file=paste0('png/', col, '-grd', grd, '-', bio, '-res', res, '-krige.png'), width=16, height=8, units='in', res=300)
 
 # plot the map
 ggplot() +
@@ -168,8 +174,9 @@ ggplot() +
     geom_text_repel(data=as.data.frame(pts),
                     aes_string(x='long', y='lat', label=col), hjust=0, vjust=0) +
 
-    # set the limits of the x scale
+    # set the limits of the scales
     scale_x_continuous(limits = c(xmin, xmax), expand = c(0, 0)) +
+    scale_y_continuous(limits = c(ymin, ymax), expand = c(0, 0)) +
 
     # use a fixed aspect ratio
     coord_equal() +
