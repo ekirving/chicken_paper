@@ -19,7 +19,7 @@ library(ggrepel, quietly = TRUE)
 # get the command line arguments
 args <- commandArgs(trailingOnly = TRUE)
 col <- args[1]              # column in the google sheet to use as the date ('BP_low' or 'BP_high')
-hiq <- as.numeric(args[2])  # drop low confidence samples
+hiq <- as.numeric(args[2])  # should we drop low confidence samples
 grd <- as.numeric(args[3])  # size (in degrees) of the thinning grid
 bio <- args[4]              # bioclimate variable to use for interpolation ('bio1', 'bio6', 'bio11')
 res <- as.numeric(args[5])  # size (in minutes) of a raster tile  (0.5, 2.5, 5, and 10)
@@ -29,7 +29,7 @@ err <- as.numeric(args[6])  # maximum standard error in the model to display
 # setwd("/Users/Evan/Dropbox/Code/chickens")
 # col <- 'BP_low'
 # hiq <- 0
-# grd <- 10
+# grd <- 5
 # bio <- 'bio11'
 # res <- 10
 # err <- 1000
@@ -71,20 +71,27 @@ samples <- samples %>%
     slice(which.max(.data[[col]])) %>%
     ungroup()
 
-# thin the samples within an X*X grid
+# thin the samples within an X*X grid square
 samples.thin <- samples %>%
     mutate(lat.rnd = round(lat/grd)*grd, long.rnd = round(long/grd)*grd) %>%
     group_by(lat.rnd, long.rnd) %>%
-    mutate(label = ifelse(.data[[col]] < max(.data[[col]]), NA, .data[[col]])) %>%
-    filter(.data[[col]] >= (max(.data[[col]]) - 250))  %>%
+    filter(.data[[col]] >= max(.data[[col]]) - 250)  %>%
     ungroup() %>%
     select(-one_of('lat.rnd', 'long.rnd'))
 
-    # slice(which.max(.data[[col]])) %>%
+    # slice(which.max(.data[[col]])) %>%               # only the oldest
     # filter(.data[[col]] >= mean(.data[[col]]))       # older than the local mean
 
 # get all the dropped samples
 samples.drop <- anti_join(samples, samples.thin)
+
+# only show the oldest label in each 10x10 grid square
+samples.label <- samples.thin %>%
+    mutate(lat.rnd = round(lat/10)*10, long.rnd = round(long/10)*10) %>%
+    group_by(lat.rnd, long.rnd) %>%
+    slice(which.max(.data[[col]])) %>%
+    ungroup() %>%
+    select(one_of('lat', 'long', col))
 
 # convert to SpatialPointsDataFrame and set standard WGS84 long-lat projection
 pts <- SpatialPointsDataFrame(coords = samples.thin[c('long','lat')],
@@ -155,18 +162,20 @@ dev.off()
 samples.krig <- autoKrige(krig.formula, pts_t, grd_pts_in_t)
 
 # convert back to lat/long before plotting
-krig.latlong <- spTransform(samples.krig$krige_output, CRSobj = CRS("+init=epsg:4326"))
+krige.sp <- spTransform(samples.krig$krige_output, CRSobj = CRS("+init=epsg:4326"))
 
 # set any negative BP values to 0
-krig.latlong$var1.pred[krig.latlong$var1.pred < 0] <- 0
+krige.sp$var1.pred[krige.sp$var1.pred < 0] <- 0
 
 # mask high standard error regions
-krig.latlong$var1.pred[krig.latlong$var1.stdev > err] <- NA
+krige.sp$var1.pred[krige.sp$var1.stdev > err] <- NA
 
 # shift the framing of the map, so we can see the Pacific
-krig.latlong@coords[,'x'][krig.latlong$x < xmin] <- krig.latlong$x[krig.latlong$x < xmin] + 360
+krige.sp@coords[,'x'][krige.sp$x < xmin] <- krige.sp$x[krige.sp$x < xmin] + 360
 pts@coords[,'long'][pts$long < xmin] <- pts$long[pts$long < xmin] + 360
 samples.drop$long[samples.drop$long < xmin] <- samples.drop$long[samples.drop$long < xmin] + 360
+samples.label$long[samples.label$long < xmin] <- samples.label$long[samples.label$long < xmin] + 360
+
 
 # ------------------------------------------------------------------------------
 # plot the model
@@ -178,7 +187,7 @@ png(file=paste0('png/krige/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', r
 ggplot() +
 
     # plot the Krige surface
-    geom_tile(data=as.data.frame(krig.latlong), aes(x=x, y=y, fill=var1.pred)) +
+    geom_tile(data=as.data.frame(krige.sp), aes(x=x, y=y, fill=var1.pred)) +
 
     # plot the unused samples first
     geom_point(data=samples.drop, aes(x=long, y=lat), colour = "grey") +
@@ -188,8 +197,7 @@ ggplot() +
                # shape = 21, size = 2, stroke = 1, colour = "red", fill="transparent") +
 
     # plot the dates of the samples used for Kriging
-    geom_text_repel(data=as.data.frame(pts),
-                    aes_string(x='long', y='lat', label='label'), hjust=0, vjust=0) +
+    geom_text_repel(data=samples.label, aes_string(x='long', y='lat', label=col), hjust=0, vjust=0) +
 
     # set the limits of the scales
     scale_x_continuous(limits = c(xmin, xmax), expand = c(0, 0)) +
@@ -222,7 +230,7 @@ png(file=paste0('png/stderr/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', 
 ggplot() +
 
     # plot the Krige surface
-    geom_tile(data=as.data.frame(krig.latlong), aes(x=x, y=y, fill=var1.stdev)) +
+    geom_tile(data=as.data.frame(krige.sp), aes(x=x, y=y, fill=var1.stdev)) +
 
     # plot the samples used for the Kriging
     geom_point(data=as.data.frame(pts), aes(x=long, y=lat), colour = "red") +
