@@ -164,8 +164,11 @@ samples.krig <- autoKrige(krig.formula, pts_t, grd_pts_in_t)
 # convert back to lat/long before plotting
 krige.sp <- spTransform(samples.krig$krige_output, CRSobj = CRS("+init=epsg:4326"))
 
-# set any negative BP values to 0
+# set any negative values to 0
 krige.sp$var1.pred[krige.sp$var1.pred < 0] <- 0
+
+# and cap positive values at the oldeset observed date
+krige.sp$var1.pred[krige.sp$var1.pred > max.age] <- max.age
 
 # mask high standard error regions
 krige.sp$var1.pred[krige.sp$var1.stdev > err] <- NA
@@ -181,7 +184,7 @@ samples.label$long[samples.label$long < xmin] <- samples.label$long[samples.labe
 # plot the model
 # ------------------------------------------------------------------------------
 
-png(file=paste0('png/krige/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', res, '-krige.png'), width=16, height=8, units='in', res=300)
+png(file=paste0('png/krige/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', res, '-err', err, '-krige.png'), width=16, height=8, units='in', res=300)
 
 # plot the map
 ggplot() +
@@ -244,7 +247,7 @@ ggplot() +
 
     # set the colour palette for the Krige surface
     scale_fill_viridis(name = "stderr", na.value = 'gainsboro', option='plasma',
-                       limits = c(200, 1200)) +
+                       limits = c(0, 1200)) +
 
     # use minimal ggplot theme
     theme_bw() +
