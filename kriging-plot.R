@@ -27,12 +27,12 @@ err <- as.numeric(args[6])  # maximum standard error in the model to display
 
 # TODO remove when done testing
 # setwd("/Users/Evan/Dropbox/Code/chickens")
-# col <- 'BP_low'
+# col <- 'BP_mid'
 # hiq <- 0
 # grd <- 5
 # bio <- 'bio11'
 # res <- 10
-# err <- 1000
+# err <- 290
 
 # min/max limits for the lat/long of the map
 xmin <- -20
@@ -54,11 +54,14 @@ samples <- gsheet %>% gs_read(ws = "Reviewed Jan 2019 (Good Chi)")
 samples <- samples[c('Confidence', 'Lower Range BP', 'Upper Range BP', 'Latitude', 'Longtitude')]
 colnames(samples) <- c('confidence', 'BP_low', 'BP_high', 'lat', 'long')
 
-# find the oldest sample
-max.age <- max(samples[,col])
-
 # remove all the NA data
 samples <- na.omit(samples)
+
+# find the midpoint of the dates
+samples$BP_mid <- round(rowMeans(samples[c('BP_low', 'BP_high')]))
+
+# find the oldest sample
+max.age <- max(samples[,col])
 
 # remove low quality samples
 if (hiq) {
