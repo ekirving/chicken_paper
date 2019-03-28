@@ -60,13 +60,13 @@ samples <- na.omit(samples)
 # find the midpoint of the dates
 samples$BP_mid <- round(rowMeans(samples[c('BP_low', 'BP_high')]))
 
-# find the oldest sample
-max.age <- max(samples[,col])
-
 # remove low quality samples
 if (hiq) {
     samples <- samples[samples$confidence != 'No',]
 }
+
+# find the oldest sample
+max.age <- max(samples[,col])
 
 # remove duplicate points (keep the oldest)
 samples <- samples %>%
