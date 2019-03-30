@@ -85,6 +85,9 @@ samples.thin <- samples %>%
     # slice(which.max(.data[[col]])) %>%               # only the oldest
     # filter(.data[[col]] >= mean(.data[[col]]))       # older than the local mean
 
+# manually remove some bad samples
+samples.thin <- samples.thin[samples.thin$long != 103.206389,]
+
 # get all the dropped samples
 samples.drop <- anti_join(samples, samples.thin)
 
