@@ -78,7 +78,7 @@ samples <- samples %>%
 samples.thin <- samples %>%
     mutate(lat.rnd = round(lat/grd)*grd, long.rnd = round(long/grd)*grd) %>%
     group_by(lat.rnd, long.rnd) %>%
-    filter(.data[[col]] >= max(.data[[col]]) - 250)  %>%
+    filter(.data[[col]] >= max(.data[[col]]) - 200)  %>%
     ungroup() %>%
     select(-one_of('lat.rnd', 'long.rnd'))
 
