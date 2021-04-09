@@ -3,6 +3,7 @@ channels:
   - bioconda
   - defaults
 dependencies:
+  - parallel=20210222
   - r-automap=1.0_14
   - r-base=3.5.1
   - r-codetools=0.2_16
