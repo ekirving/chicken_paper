@@ -9,7 +9,7 @@ library(sp, quietly = TRUE)
 library(dplyr, quietly = TRUE)
 library(ggplot2, quietly = TRUE)
 library(automap, quietly = TRUE)
-library(googlesheets4, quietly = TRUE)
+library(readr, quietly = TRUE)
 library(viridis, quietly = TRUE)
 library(maps, quietly = TRUE)
 library(mapdata, quietly = TRUE)
@@ -46,19 +46,11 @@ ymax <-  85
 # ------------------------------------------------------------------------------
 
 # grab the data file
-gsheet <- gs4_get("1o9_Sa2NDt8mjstbnC0HhZ0RiFfzr3WuWc-9S6Gnhe04")
-
-# get the tab containing the known data
-samples <- gsheet %>%
-    read_sheet(sheet = "Reviewed Jan 2021 (Good Chi)")
+samples <- read_tsv("data/Chicken_Samples_Coordinates_OL_JorisManuscript_Reviewed_Jan_2021_Good_Chi.tsv")
 
 # extract the relevant columns
 samples <- samples[c('Confidence', 'Lower Range BP', 'Upper Range BP', 'Latitude', 'Longtitude')]
 colnames(samples) <- c('confidence', 'BP_low', 'BP_high', 'lat', 'long')
-
-# convert lat/long to numeric
-samples <- samples %>%
-    mutate(lat=as.numeric(lat), long=as.numeric(long))
 
 # remove all the NA data
 samples <- na.omit(samples)
