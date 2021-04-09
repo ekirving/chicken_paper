@@ -1,0 +1,22 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-automap=1.0_14
+  - r-base=3.6.3
+  - r-codetools=0.2_18
+  - r-dplyr=1.0.5
+  - r-ggplot2=3.3.3
+  - r-ggrepel=0.9.1
+  - r-googlesheets4=0.3.0
+  - r-httpuv=1.5.5
+  - r-mapdata=2.3.0
+  - r-maps=3.3.0
+  - r-maptools=1.1_1
+  - r-raster=3.4_5
+  - r-rgdal-1.5_16
+  - r-sp=1.4_5
+  - r-spacetime=1.2_4
+  - r-viridis=0.5.1
+  - r-viridislite=0.3.0

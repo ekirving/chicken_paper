@@ -9,12 +9,14 @@ library(sp, quietly = TRUE)
 library(dplyr, quietly = TRUE)
 library(ggplot2, quietly = TRUE)
 library(automap, quietly = TRUE)
-library(googlesheets, quietly = TRUE)
+library(googlesheets4, quietly = TRUE)
 library(viridis, quietly = TRUE)
 library(maps, quietly = TRUE)
 library(mapdata, quietly = TRUE)
 library(maptools, quietly = TRUE)
 library(ggrepel, quietly = TRUE)
+library(raster, quietly = TRUE)
+library(rgdal, quietly = TRUE)
 
 # get the command line arguments
 args <- commandArgs(trailingOnly = TRUE)
@@ -26,7 +28,6 @@ res <- as.numeric(args[5])  # size (in minutes) of a raster tile  (0.5, 2.5, 5, 
 err <- as.numeric(args[6])  # maximum standard error in the model to display
 
 # TODO remove when done testing
-# setwd("/Users/Evan/Dropbox/Code/chickens")
 # col <- 'BP_mid'
 # hiq <- 0
 # grd <- 5
@@ -45,14 +46,19 @@ ymax <-  85
 # ------------------------------------------------------------------------------
 
 # grab the data file
-gsheet <- gs_title("Chicken_Samples_Coordinates_OL_Jan2019")
+gsheet <- gs4_get("1o9_Sa2NDt8mjstbnC0HhZ0RiFfzr3WuWc-9S6Gnhe04")
 
 # get the tab containing the known data
-samples <- gsheet %>% gs_read(ws = "Reviewed Jan 2019 (Good Chi)")
+samples <- gsheet %>%
+    read_sheet(sheet = "Reviewed Jan 2021 (Good Chi)")
 
 # extract the relevant columns
 samples <- samples[c('Confidence', 'Lower Range BP', 'Upper Range BP', 'Latitude', 'Longtitude')]
 colnames(samples) <- c('confidence', 'BP_low', 'BP_high', 'lat', 'long')
+
+# convert lat/long to numeric
+samples <- samples %>%
+    mutate(lat=as.numeric(lat), long=as.numeric(long))
 
 # remove all the NA data
 samples <- na.omit(samples)
@@ -80,7 +86,7 @@ samples.thin <- samples %>%
     group_by(lat.rnd, long.rnd) %>%
     filter(.data[[col]] >= max(.data[[col]]) - 200)  %>%
     ungroup() %>%
-    select(-one_of('lat.rnd', 'long.rnd'))
+    dplyr::select(-one_of('lat.rnd', 'long.rnd'))
 
     # slice(which.max(.data[[col]])) %>%               # only the oldest
     # filter(.data[[col]] >= mean(.data[[col]]))       # older than the local mean
@@ -97,7 +103,7 @@ samples.label <- samples.thin %>%
     group_by(lat.rnd, long.rnd) %>%
     slice(which.max(.data[[col]])) %>%
     ungroup() %>%
-    select(one_of('lat', 'long', col))
+    dplyr::select(one_of('lat', 'long', col))
 
 # convert to SpatialPointsDataFrame and set standard WGS84 long-lat projection
 pts <- SpatialPointsDataFrame(coords = samples.thin[c('long','lat')],
@@ -123,6 +129,13 @@ pts <- SpatialPointsDataFrame(coords = samples.thin[c('long','lat')],
 # ------------------------------------------------------------------------------
 # option 2: fetch a raster map containing climate data to interpolate over
 # ------------------------------------------------------------------------------
+
+# make the output directories
+dir.create('png/bio/', recursive = TRUE, showWarnings = FALSE)
+dir.create('png/krige/', recursive = TRUE, showWarnings = FALSE)
+dir.create('png/stderr/', recursive = TRUE, showWarnings = FALSE)
+dir.create('png/vario/', recursive = TRUE, showWarnings = FALSE)
+dir.create('raster/', showWarnings = FALSE)
 
 # resolution is measured in minutes of a degree (0.5, 2.5, 5, and 10)
 climate <- raster::getData('worldclim', var='bio', res=res, path='raster')
