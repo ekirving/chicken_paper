@@ -5,18 +5,21 @@
 # http://rstudio-pubs-static.s3.amazonaws.com/80464_9156596afb2e4dcda53e3650a68df82a.html
 # https://stackoverflow.com/questions/43436466/create-grid-in-r-for-kriging-in-gstat/43444232#answer-45948442
 
-library(sp, quietly = TRUE)
-library(dplyr, quietly = TRUE)
-library(ggplot2, quietly = TRUE)
-library(automap, quietly = TRUE)
-library(readr, quietly = TRUE)
-library(viridis, quietly = TRUE)
-library(maps, quietly = TRUE)
-library(mapdata, quietly = TRUE)
-library(maptools, quietly = TRUE)
-library(ggrepel, quietly = TRUE)
-library(raster, quietly = TRUE)
-library(rgdal, quietly = TRUE)
+quiet <- function(x) {
+    suppressMessages(suppressWarnings(x))
+}
+quiet(library(sp))
+quiet(library(dplyr))
+quiet(library(ggplot2))
+quiet(library(automap))
+quiet(library(readr))
+quiet(library(viridis))
+quiet(library(maps))
+quiet(library(mapdata))
+quiet(library(maptools))
+quiet(library(ggrepel))
+quiet(library(raster))
+quiet(library(rgdal))
 
 # get the command line arguments
 args <- commandArgs(trailingOnly = TRUE)
