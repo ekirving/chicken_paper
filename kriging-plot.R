@@ -49,7 +49,7 @@ ymax <-  85
 # ------------------------------------------------------------------------------
 
 # grab the data file
-samples <- read_tsv("data/Chicken_Samples_Coordinates_OL_JorisManuscript_Reviewed_Jan_2021_Good_Chi.tsv")
+samples <- read_tsv("data/Chicken_Samples_Coordinates_OL_JorisManuscript_Reviewed_April_2021_Good_Chi.tsv")
 
 # extract the relevant columns
 samples <- samples[c('Confidence', 'Lower Range BP', 'Upper Range BP', 'Latitude', 'Longtitude')]
