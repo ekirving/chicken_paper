@@ -36,7 +36,7 @@ err <- as.numeric(args[6])  # maximum standard error in the model to display
 # grd <- 5
 # bio <- 'bio11'
 # res <- 10
-# err <- 290
+# err <- 400
 
 # min/max limits for the lat/long of the map
 xmin <- -20
@@ -49,7 +49,7 @@ ymax <-  85
 # ------------------------------------------------------------------------------
 
 # grab the data file
-samples <- read_tsv("data/Chicken_Samples_Coordinates_OL_JorisManuscript_Reviewed_April_2021_Good_Chi.tsv")
+samples <- read_tsv("data/Chicken_Samples_Coordinates_OL_JorisManuscript_Reviewed_June_2021_Good_Chi.tsv")
 
 # extract the relevant columns
 samples <- samples[c('Confidence', 'Lower Range BP', 'Upper Range BP', 'Latitude', 'Longtitude')]
