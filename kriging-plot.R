@@ -107,24 +107,8 @@ pts <- SpatialPointsDataFrame(coords = samples.thin[c('long','lat')],
                               data = samples.thin[,-which(names(samples.thin) %in% c('long','lat'))],
                               proj4string=CRS("+init=epsg:4326"))
 
-# ------------------------------------------------------------------------------
-# option 1: make a raster grid to interpolate over
-# ------------------------------------------------------------------------------
-
-# # get a hires map of the world as spatial polygons
-# spdf <- rworldmap::getMap(resolution = "high")
-#
-# grd <- makegrid(spdf, n = 1e6)  # make 'n' bigger for a smoother surface
-# colnames(grd) <- c('long', 'lat')
-#
-# grd_pts <- SpatialPointsDataFrame(coords = grd, data = grd,
-#                                   proj4string=CRS(" +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"))
-#
-# # find all points in `grd_pts` that fall within `spdf`
-# pts.grid <- grd_pts[spdf, ]
-
-# ------------------------------------------------------------------------------
-# option 2: fetch a raster map containing climate data to interpolate over
+---------------------------------------------------
+# fetch a raster map containing climate data to interpolate over
 # ------------------------------------------------------------------------------
 
 # make the output directories
@@ -172,7 +156,7 @@ grd_pts_in_t <- spTransform(pts.grid, CRSobj = CRS("+init=epsg:3857"))
 krig.formula <- as.formula(paste(col, '~', bio))
 
 # plot the fit
-png(file=paste0('png/vario/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', res, '-variogram.png'), width=8, height=4, units='in', res=300)
+png(file=paste0('png/vario/', col, '-hiq', hiq, '-num', num, '-', bio, '-res', res, '-variogram.png'), width=8, height=4, units='in', res=300)
 plot(autofitVariogram(krig.formula, pts_t))
 dev.off()
 
@@ -203,7 +187,7 @@ samples.label$long[samples.label$long < xmin] <- samples.label$long[samples.labe
 # plot the model
 # ------------------------------------------------------------------------------
 
-png(file=paste0('png/krige/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', res, '-err', err, '-krige.png'), width=16, height=8, units='in', res=300)
+png(file=paste0('png/krige/', col, '-hiq', hiq, '-num', num, '-', bio, '-res', res, '-err', err, '-krige.png'), width=16, height=8, units='in', res=300)
 
 # plot the map
 ggplot() +
@@ -246,7 +230,7 @@ dev.off()
 # plot the standard error
 # ------------------------------------------------------------------------------
 
-png(file=paste0('png/stderr/', col, '-hiq', hiq, '-grd', grd, '-', bio, '-res', res, '-stderr.png'), width=16, height=8, units='in', res=300)
+png(file=paste0('png/stderr/', col, '-hiq', hiq, '-num', num, '-', bio, '-res', res, '-stderr.png'), width=16, height=8, units='in', res=300)
 
 # plot the map
 ggplot() +
