@@ -36,7 +36,7 @@ p <- add_argument(p, "--labels", default = 60, help = "Number of smaples to labe
 p <- add_argument(p, "--bioclimate", default="bio11", help = "Bioclimate variable to use for interpolation (e.g., 'bio1', 'bio6', 'bio11')")
 p <- add_argument(p, "--resolution", default=10, help = "Resolution (in minutes) of each raster tile  (e.g., 0.5, 2.5, 5, and 10)")
 p <- add_argument(p, "--stderr", default=600, help = "Maximum standard error in the model to display")
-p <- add_argument(p, "--palette", default="viridis", help = "Colour palette for the maps (e.g., 'viridis', 'magma', 'plasma', 'inferno', 'civids', 'mako', 'rocket', 'turbo')")
+p <- add_argument(p, "--palette", default="viridis", help = "Colour palette for the maps (e.g., 'viridis', 'magma', 'inferno', 'plasma', 'cividis')")
 
 argv <- parse_args(p)
 
@@ -187,7 +187,7 @@ samples.label$long[samples.label$long < xmin] <- samples.label$long[samples.labe
 # plot the model
 # ------------------------------------------------------------------------------
 
-png(file=paste0('png/krige/', argv$column, '-hiq', argv$high_conf, '-num', argv$clusters, '-', argv$bioclimate, '-res', argv$resolution, '-err', argv$stderr, '-krige.png'), width=16, height=8, units='in', res=300)
+png(file=paste0('png/krige/', argv$column, '-hiq', argv$high_conf, '-num', argv$clusters, '-', argv$bioclimate, '-res', argv$resolution, '-err', argv$stderr, '-', argv$palette, '-krige.png'), width=16, height=8, units='in', res=300)
 
 # plot the map
 ggplot() +
