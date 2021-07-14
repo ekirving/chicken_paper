@@ -25,7 +25,7 @@ quiet(library(rgdal))
 args <- commandArgs(trailingOnly = TRUE)
 col <- args[1]              # column in the google sheet to use as the date ('BP_low' or 'BP_high')
 hiq <- as.numeric(args[2])  # should we drop low confidence samples
-grd <- as.numeric(args[3])  # size (in degrees) of the thinning grid
+num <- as.numeric(args[3])  # number of clusters to use for thinning observations
 bio <- args[4]              # bioclimate variable to use for interpolation ('bio1', 'bio6', 'bio11')
 res <- as.numeric(args[5])  # size (in minutes) of a raster tile  (0.5, 2.5, 5, and 10)
 err <- as.numeric(args[6])  # maximum standard error in the model to display
@@ -75,19 +75,21 @@ samples <- samples %>%
     slice(which.max(.data[[col]])) %>%
     ungroup()
 
-# thin the samples within an X*X grid square
+# calculate the Euclidean between all sample points
+dist_mat <- dist(samples[c('lat','long')], method = 'euclidean')
+
+# perform hierarchical clustering of the samples, using the average of each cluster
+hclust_avg <- hclust(dist_mat, method = 'average')
+
+# extract the cluster labels for K clusters
+samples$cluster <- cutree(hclust_avg, k = num)
+
+# only retain the oldest sample from each cluster
 samples.thin <- samples %>%
-    mutate(lat.rnd = round(lat/grd)*grd, long.rnd = round(long/grd)*grd) %>%
-    group_by(lat.rnd, long.rnd) %>%
-    filter(.data[[col]] >= max(.data[[col]]) - 200)  %>%
+    group_by(cluster) %>%
+    slice(which.max(.data[[col]])) %>%
     ungroup() %>%
-    dplyr::select(-one_of('lat.rnd', 'long.rnd'))
-
-    # slice(which.max(.data[[col]])) %>%               # only the oldest
-    # filter(.data[[col]] >= mean(.data[[col]]))       # older than the local mean
-
-# manually remove some bad samples
-samples.thin <- samples.thin[samples.thin$long != 103.206389,]
+    dplyr::select(-cluster)
 
 # get all the dropped samples
 samples.drop <- anti_join(samples, samples.thin)
