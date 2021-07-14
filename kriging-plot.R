@@ -26,6 +26,7 @@ args <- commandArgs(trailingOnly = TRUE)
 col <- args[1]              # column in the google sheet to use as the date ('BP_low' or 'BP_high')
 hiq <- as.numeric(args[2])  # should we drop low confidence samples
 num <- as.numeric(args[3])  # number of clusters to use for thinning observations
+lbl <- as.numeric(args[3])  # number of samples to label
 bio <- args[4]              # bioclimate variable to use for interpolation ('bio1', 'bio6', 'bio11')
 res <- as.numeric(args[5])  # size (in minutes) of a raster tile  (0.5, 2.5, 5, and 10)
 err <- as.numeric(args[6])  # maximum standard error in the model to display
@@ -34,9 +35,10 @@ err <- as.numeric(args[6])  # maximum standard error in the model to display
 # col <- 'BP_mid'
 # hiq <- 0
 # num <- 200
+# lbl <- 60
 # bio <- 'bio11'
 # res <- 10
-# err <- 400
+# err <- 500
 
 # min/max limits for the lat/long of the map
 xmin <- -20
@@ -81,23 +83,21 @@ dist_mat <- dist(samples[c('lat','long')], method = 'euclidean')
 # perform hierarchical clustering of the samples, using the average of each cluster
 hclust_avg <- hclust(dist_mat, method = 'average')
 
-# extract the cluster labels for K clusters
+# extract the cluster labels for K clusters, and K/2 clusters
 samples$cluster <- cutree(hclust_avg, k = num)
+samples$label <- cutree(hclust_avg, k = lbl)
 
 # only retain the oldest sample from each cluster
 samples.thin <- samples %>%
     group_by(cluster) %>%
-    slice(which.max(.data[[col]])) %>%
-    ungroup() %>%
-    dplyr::select(-cluster)
+    slice(which.max(.data[[col]]))
 
 # get all the dropped samples
 samples.drop <- anti_join(samples, samples.thin)
 
-# only show the oldest label in each 10x10 grid square
-samples.label <- samples.thin %>%
-    mutate(lat.rnd = round(lat/10)*10, long.rnd = round(long/10)*10) %>%
-    group_by(lat.rnd, long.rnd) %>%
+# show labels for half of the retained samples used for the map
+samples.label <- samples %>%
+    group_by(label) %>%
     slice(which.max(.data[[col]])) %>%
     ungroup() %>%
     dplyr::select(one_of('lat', 'long', col))
@@ -196,14 +196,13 @@ ggplot() +
     geom_tile(data=as.data.frame(krige.sp), aes(x=x, y=y, fill=var1.pred)) +
 
     # plot the unused samples first
-    geom_point(data=samples.drop, aes(x=long, y=lat), colour = "grey") +
+    geom_point(data=samples.drop, aes(x=long, y=lat), shape = 21, colour = "red") +
 
     # plot the samples used for the Kriging
-    geom_point(data=as.data.frame(pts), aes(x=long, y=lat), colour = "red") +
-               # shape = 21, size = 2, stroke = 1, colour = "red", fill="transparent") +
+    geom_point(data=as.data.frame(pts), aes(x=long, y=lat), shape = 19, colour = "red") +
 
     # plot the dates of the samples used for Kriging
-    geom_text_repel(data=samples.label, aes_string(x='long', y='lat', label=col), hjust=0, vjust=0) +
+    geom_text_repel(data=samples.label, aes_string(x='long', y='lat', label=col), min.segment.length = 0, box.padding = 0.5, na.rm = TRUE) +
 
     # set the limits of the scales
     scale_x_continuous(limits = c(xmin, xmax), expand = c(0, 0)) +
