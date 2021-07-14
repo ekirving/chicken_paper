@@ -54,7 +54,7 @@ ymax <-  85
 samples <- read_tsv("data/Chicken_Samples_Coordinates_OL_JorisManuscript_Reviewed_June_2021_Good_Chi.tsv")
 
 # extract the relevant columns
-samples <- samples[c('Confidence', 'Lower Range BP', 'Upper Range BP', 'Latitude', 'Longtitude')]
+samples <- samples[c('Confidence', 'Lower Range BP', 'Upper Range BP', 'Latitude', 'Longitude')]
 colnames(samples) <- c('confidence', 'BP_low', 'BP_high', 'lat', 'long')
 
 # remove all the NA data
