@@ -4,6 +4,7 @@ channels:
   - defaults
 dependencies:
   - parallel=20210222
+  - r-argparser=0.6
   - r-automap=1.0_14
   - r-base=3.5.1
   - r-codetools=0.2_16
