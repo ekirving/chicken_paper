@@ -33,7 +33,7 @@ err <- as.numeric(args[6])  # maximum standard error in the model to display
 # TODO remove when done testing
 # col <- 'BP_mid'
 # hiq <- 0
-# grd <- 5
+# num <- 200
 # bio <- 'bio11'
 # res <- 10
 # err <- 400
@@ -143,9 +143,12 @@ climate <- raster::getData('worldclim', var='bio', res=res, path='raster')
 # see https://www.worldclim.org/bioclim
 
 # plot the climate map
-png(file=paste0('png/bio/', bio, '-res', res, '-map.png'), width=16, height=8, units='in', res=300)
-plot(climate[[bio]])
-dev.off()
+map_file <- paste0('png/bio/', bio, '-res', res, '-map.png')
+if (!file.exists(map_file)) {
+    png(file=, width=16, height=8, units='in', res=300)
+    plot(climate[[bio]])
+    dev.off()
+}
 
 # convert the raster to a SpatialPointsDataFrame
 pts.grid <- raster::rasterToPoints(climate[[bio]], spatial=TRUE)
