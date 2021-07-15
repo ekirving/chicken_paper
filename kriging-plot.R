@@ -130,7 +130,7 @@ climate <- raster::getData('worldclim', var='bio', res=argv$resolution, path='ra
 # plot the climate map
 map_file <- paste0('png/bio/', argv$bioclimate, '-res', argv$resolution, '-map.png')
 if (!file.exists(map_file)) {
-    png(file=, width=16, height=8, units='in', res=300)
+    png(file=map_file, width=16, height=8, units='in', res=300)
     plot(climate[[argv$bioclimate]])
     dev.off()
 }
@@ -161,7 +161,6 @@ png(file=paste0('png/vario/', argv$column, '-hiq', argv$high_conf, '-num', argv$
 plot(autofitVariogram(krig.formula, pts_t))
 dev.off()
 
-# TODO check [using universal kriging]
 # perform the Kriging
 samples.krig <- autoKrige(krig.formula, pts_t, grd_pts_in_t)
 
