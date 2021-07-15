@@ -30,7 +30,7 @@ quiet(library(argparser))
 # get the command line arguments
 p <- arg_parser("Prepare the CLUES data for peak detection with harvester")
 p <- add_argument(p, "--data", default = "data/Chicken_Samples_Coordinates_OL_JorisManuscript_Reviewed_June_2021_Good_Chi.tsv", help = "Path to the spreadsheet to use")
-p <- add_argument(p, "--column", default = "BP_mid", help = "Column in the spreadsheet to use as the date (e.g., 'BP_low', 'BP_high')")
+p <- add_argument(p, "--column", default = "BP_high", help = "Column in the spreadsheet to use as the date (e.g., 'BP_low', 'BP_high')")
 p <- add_argument(p, "--high-conf", flag = TRUE, help = "Only retain high confidence samples")
 p <- add_argument(p, "--clusters", default = 100, help = "Number of clusters to use for thinning observations")
 p <- add_argument(p, "--labels", default = 60, help = "Number of smaples to label")
