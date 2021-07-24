@@ -8,3 +8,4 @@ raster/*
 _old_
 *cmd.sh
 ne_50m_ocean*
+ne_110m_lakes*

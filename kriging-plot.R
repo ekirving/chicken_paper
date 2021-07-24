@@ -196,6 +196,14 @@ if (!file.exists("ne_50m_ocean.zip")) {
 # load the shape file
 ocean_st <- st_read("ne_50m_ocean/ne_50m_ocean.shp")
 
+if (!file.exists("ne_110m_lakes.zip")) {
+    download.file("https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/110m/physical/ne_110m_lakes.zip", "ne_110m_lakes.zip")
+    unzip("ne_110m_lakes.zip", exdir="ne_110m_lakes")
+}
+
+# load the shape file
+lakes_st <- st_read("ne_110m_lakes/ne_110m_lakes.shp")
+
 # ------------------------------------------------------------------------------
 # plot the model
 # ------------------------------------------------------------------------------
@@ -208,8 +216,9 @@ ggplot() +
     # plot the Krige surface
     geom_tile(data=as.data.frame(krige.sp), aes(x=x, y=y, fill=var1.pred)) +
 
-    # over-plot the ocean boundaries
+    # over-plot the ocean and lake boundaries
     geom_sf(data = ocean_st, fill="white", color="white") +
+    geom_sf(data = lakes_st, fill="white", color="white") +
 
     # plot the unused samples first
     geom_point(data=samples.drop, aes(x=long, y=lat), shape = 21, colour = "red") +
