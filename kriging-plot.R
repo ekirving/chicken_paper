@@ -184,10 +184,10 @@ samples.drop$long[samples.drop$long < xmin] <- samples.drop$long[samples.drop$lo
 samples.label$long[samples.label$long < xmin] <- samples.label$long[samples.label$long < xmin] + 360
 
 # ------------------------------------------------------------------------------
-# fetch a better map with more precise lake boundaries
+# fetch a better map with more precise oceans boundaries
 # ------------------------------------------------------------------------------
 
-# download a vector map of the world's oceans
+# download the map data
 if (!file.exists("ne_50m_ocean.zip")) {
     download.file("https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/physical/ne_50m_ocean.zip", "ne_50m_ocean.zip")
     unzip("ne_50m_ocean.zip", exdir="ne_50m_ocean")
