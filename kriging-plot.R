@@ -14,6 +14,7 @@ quiet <- function(x) {
     suppressMessages(suppressWarnings(x))
 }
 quiet(library(sp))
+quiet(library(sf))
 quiet(library(dplyr))
 quiet(library(ggplot2))
 quiet(library(automap))
@@ -28,7 +29,7 @@ quiet(library(rgdal))
 quiet(library(argparser))
 
 # get the command line arguments
-p <- arg_parser("Prepare the CLUES data for peak detection with harvester")
+p <- arg_parser("Plot the distribution of ancient chickens maps")
 p <- add_argument(p, "--data", default = "data/Chicken_Samples_Coordinates_OL_JorisManuscript_Reviewed_June_2021_Good_Chi.tsv", help = "Path to the spreadsheet to use")
 p <- add_argument(p, "--column", default = "BP_high", help = "Column in the spreadsheet to use as the date (e.g., 'BP_low', 'BP_high')")
 p <- add_argument(p, "--high-conf", flag = TRUE, help = "Only retain high confidence samples")
@@ -108,7 +109,7 @@ pts <- SpatialPointsDataFrame(coords = samples.thin[c('long','lat')],
                               data = samples.thin[,-which(names(samples.thin) %in% c('long','lat'))],
                               proj4string=CRS("+init=epsg:4326"))
 
----------------------------------------------------
+# ------------------------------------------------------------------------------
 # fetch a raster map containing climate data to interpolate over
 # ------------------------------------------------------------------------------
 
@@ -182,6 +183,18 @@ pts@coords[,'long'][pts$long < xmin] <- pts$long[pts$long < xmin] + 360
 samples.drop$long[samples.drop$long < xmin] <- samples.drop$long[samples.drop$long < xmin] + 360
 samples.label$long[samples.label$long < xmin] <- samples.label$long[samples.label$long < xmin] + 360
 
+# ------------------------------------------------------------------------------
+# fetch a better map with more precise lake boundaries
+# ------------------------------------------------------------------------------
+
+# download a vector map of the world's oceans
+if (!file.exists("ne_50m_ocean.zip")) {
+    download.file("https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/physical/ne_50m_ocean.zip", "ne_50m_ocean.zip")
+    unzip("ne_50m_ocean.zip", exdir="ne_50m_ocean")
+}
+
+# load the shape file
+ocean_st <- st_read("ne_50m_ocean/ne_50m_ocean.shp")
 
 # ------------------------------------------------------------------------------
 # plot the model
@@ -195,6 +208,9 @@ ggplot() +
     # plot the Krige surface
     geom_tile(data=as.data.frame(krige.sp), aes(x=x, y=y, fill=var1.pred)) +
 
+    # over-plot the ocean boundaries
+    geom_sf(data = ocean_st, fill="white", color="white") +
+
     # plot the unused samples first
     geom_point(data=samples.drop, aes(x=long, y=lat), shape = 21, colour = "red") +
 
@@ -207,9 +223,6 @@ ggplot() +
     # set the limits of the scales
     scale_x_continuous(limits = c(xmin, xmax), expand = c(0, 0)) +
     scale_y_continuous(limits = c(ymin, ymax), expand = c(0, 0)) +
-
-    # use a fixed aspect ratio
-    coord_equal() +
 
     # set the colour palette for the Krige surface
     scale_fill_viridis(name = "BP", na.value = 'gainsboro', option=argv$palette,
