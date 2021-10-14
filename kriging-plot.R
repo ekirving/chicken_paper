@@ -30,7 +30,7 @@ quiet(library(argparser))
 
 # get the command line arguments
 p <- arg_parser("Plot the distribution of ancient chickens maps")
-p <- add_argument(p, "--data", default = "data/Chicken_Samples_Coordinates_OL_JorisManuscript_Reviewed_June_2021_Good_Chi.tsv", help = "Path to the spreadsheet to use")
+p <- add_argument(p, "--data", default = "data/SuppTable6_Category_Coordinates_Samples.xlsx_-_Supplementary_Table_YZ.tsv", help = "Path to the spreadsheet to use")
 p <- add_argument(p, "--column", default = "BP_high", help = "Column in the spreadsheet to use as the date (e.g., 'BP_low', 'BP_high')")
 p <- add_argument(p, "--high-conf", flag = TRUE, help = "Only retain high confidence samples")
 p <- add_argument(p, "--clusters", default = 100, help = "Number of clusters to use for thinning observations")
@@ -53,7 +53,7 @@ ymax <-  85
 # ------------------------------------------------------------------------------
 
 # grab the data file
-samples <- read_tsv(argv$data)
+samples <- read_tsv(argv$data, col_types = cols())
 
 # extract the relevant columns
 samples <- samples[c('Confidence', 'Lower Range BP', 'Upper Range BP', 'Latitude', 'Longitude')]
