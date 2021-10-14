@@ -23,7 +23,7 @@ quiet(library(viridis))
 quiet(library(maps))
 quiet(library(mapdata))
 quiet(library(maptools))
-quiet(library(ggrepel))
+quiet(library(shadowtext))
 quiet(library(raster))
 quiet(library(rgdal))
 quiet(library(argparser))
@@ -225,7 +225,7 @@ plt.krige <- ggplot() +
     geom_point(data=as.data.frame(pts), aes(x=long, y=lat), shape = 19, colour = "red") +
 
     # plot the dates of the samples used for Kriging
-    geom_text_repel(data=samples.label, aes_string(x='long', y='lat', label=argv$column), min.segment.length = 0, box.padding = 0.5, na.rm = TRUE) +
+    geom_shadowtext(data=samples.label, aes_string(x='long', y='lat', label=argv$column), check_overlap = TRUE, na.rm = TRUE, color="black", bg.colour='white', hjust = 0, nudge_x=1.5) +
 
     # set the limits of the scales
     scale_x_continuous(limits = c(xmin, xmax), expand = c(0, 0)) +
