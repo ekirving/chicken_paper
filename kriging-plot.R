@@ -37,7 +37,7 @@ p <- add_argument(p, "--clusters", default = 100, help = "Number of clusters to 
 p <- add_argument(p, "--labels", default = 60, help = "Number of smaples to label")
 p <- add_argument(p, "--bioclimate", default="bio11", help = "Bioclimate variable to use for interpolation (e.g., 'bio1', 'bio6', 'bio11')")
 p <- add_argument(p, "--resolution", default=10, help = "Resolution (in minutes) of each raster tile  (e.g., 0.5, 2.5, 5, and 10)")
-p <- add_argument(p, "--stderr", default=600, help = "Maximum standard error in the model to display")
+p <- add_argument(p, "--stderr", default=490, help = "Maximum standard error in the model to display")
 p <- add_argument(p, "--palette", default="viridis", help = "Colour palette for the maps (e.g., 'viridis', 'magma', 'inferno', 'plasma', 'cividis')")
 
 argv <- parse_args(p)
@@ -208,17 +208,15 @@ lakes_st <- st_read("ne_110m_lakes/ne_110m_lakes.shp")
 # plot the model
 # ------------------------------------------------------------------------------
 
-png(file=paste0('png/krige/', argv$column, '-hiq', argv$high_conf, '-num', argv$clusters, '-', argv$bioclimate, '-res', argv$resolution, '-err', argv$stderr, '-', argv$palette, '-krige.png'), width=16, height=8, units='in', res=300)
-
 # plot the map
-ggplot() +
+plt.krige <- ggplot() +
 
     # plot the Krige surface
     geom_tile(data=as.data.frame(krige.sp), aes(x=x, y=y, fill=var1.pred)) +
 
     # over-plot the ocean and lake boundaries
-    geom_sf(data = ocean_st, fill="white", color="white") +
-    geom_sf(data = lakes_st, fill="white", color="white") +
+    geom_sf(data = ocean_st, mapping = aes(geometry = geometry), fill="white", color="white") +
+    geom_sf(data = lakes_st, mapping = aes(geometry = geometry), fill="white", color="white") +
 
     # plot the unused samples first
     geom_point(data=samples.drop, aes(x=long, y=lat), shape = 21, colour = "red") +
@@ -245,16 +243,18 @@ ggplot() +
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank())
 
-dev.off()
+# make a file name prefix
+prefix <- paste0(argv$column, '-hiq', argv$high_conf, '-num', argv$clusters, '-', argv$bioclimate, '-res', argv$resolution, '-err', argv$stderr, '-', argv$palette)
+
+# save the plot as a PNG
+ggsave(paste0('png/krige/', prefix, '-krige.png'), plot=plt.krige, width=16, height=8, units='in', dpi=300)
 
 # ------------------------------------------------------------------------------
 # plot the standard error
 # ------------------------------------------------------------------------------
 
-png(file=paste0('png/stderr/', argv$column, '-hiq', argv$high_conf, '-num', argv$clusters, '-', argv$bioclimate, '-res', argv$resolution, '-stderr.png'), width=16, height=8, units='in', res=300)
-
 # plot the map
-ggplot() +
+plt.err <- ggplot() +
 
     # plot the Krige surface
     geom_tile(data=as.data.frame(krige.sp), aes(x=x, y=y, fill=var1.stdev)) +
@@ -281,4 +281,8 @@ ggplot() +
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank())
 
-dev.off()
+# make a file name prefix
+prefix <- paste0(argv$column, '-hiq', argv$high_conf, '-num', argv$clusters, '-', argv$bioclimate, '-res', argv$resolution, '-stderr.png')
+
+# save the plot as a PNG
+ggsave(paste0('png/stderr/', prefix, '-krige.png'), plot=plt.err, width=16, height=8, units='in', dpi=300)
