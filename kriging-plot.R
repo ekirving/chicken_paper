@@ -37,7 +37,7 @@ p <- add_argument(p, "--clusters", default = 100, help = "Number of clusters to 
 p <- add_argument(p, "--labels", default = 60, help = "Number of smaples to label")
 p <- add_argument(p, "--bioclimate", default="bio11", help = "Bioclimate variable to use for interpolation (e.g., 'bio1', 'bio6', 'bio11')")
 p <- add_argument(p, "--resolution", default=10, help = "Resolution (in minutes) of each raster tile  (e.g., 0.5, 2.5, 5, and 10)")
-p <- add_argument(p, "--stderr", default=490, help = "Maximum standard error in the model to display")
+p <- add_argument(p, "--stderr", default=500, help = "Maximum standard error in the model to display")
 p <- add_argument(p, "--palette", default="viridis", help = "Colour palette for the maps (e.g., 'viridis', 'magma', 'inferno', 'plasma', 'cividis')")
 
 argv <- parse_args(p)

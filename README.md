@@ -1,8 +1,8 @@
 # Chickens
-This repository contains R code for plotting Figure XX from 
+This repository contains R code for plotting Figure 2 from 
 the paper [A comprehensive archaeological assessment of the cultural origins and dispersal of domestic chicken]().
 
-![Figure XX](./figure/Figure_XX.png?raw=true)
+![Figure 2](./figure/Figure_2.png?raw=true)
 
 If you reuse any of this code then please cite the paper:
 > TBD
@@ -27,7 +27,7 @@ conda activate chickens
 
 ## Running the code
 
-To reproduce the figures, run:
+To reproduce Figure 2, run:
 
 ```bash
 Rscript kriging-plot.R 
