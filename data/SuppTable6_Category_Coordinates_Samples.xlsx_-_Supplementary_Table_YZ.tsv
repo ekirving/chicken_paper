@@ -77,7 +77,7 @@ Europe	Finland	Salo (Halikko), Riihikankare	Late Iron Age/Early medieval	~722–
 Europe	France	Ennery	La Tène C2	200-150 BCE		Maybe	200		2150	150		2100	10 speciemens	49.2267	6.2175
 Europe	France	Verberie	La Tène C	280/250-190/150 BCE		Maybe	280		2230	150		2100	4 specimens	49.3111	2.7322
 Europe	France	Vermand	La Tène C	280/250-190/150 BCE		Maybe	280		2230	150		2100	29 specimens	49.87	3.15
-Europe	France	Villiers-le-Sec	La Tène C	280/250-190/150 BCE		Maybe	280		2230	150		2100	1 specimen	49.066667	2.4
+Europe	France	Villiers-le-Sec	La Tène C	280/250-190/150 BCE		Maybe	280		2230	150		2100	1 specimen	48.10845	5.06532
 Europe	France	Bobigny	La Tène C	280/250-190/160 BCE		Maybe	280		2230	160		2110	5 specimens	48.9106	2.4397
 Europe	France	Fontenay-en-Parisis	La Tène C	280/250-190/160 BCE		Maybe	280		2230	160		2110	3 specimens	49.0533	 2.4511
 Europe	France	Varennes-sur-Seine	La Tène C	280/250-190/160 BCE		Maybe	280		2230	160		2110	26 specimens	48.375	 2.9267
@@ -335,7 +335,7 @@ Europe	Switzerland	Zug	La Tène A	480/450 - 380 BCE 		Maybe	480		2430	380		2330	
 Europe	Ukraine	Pantikápaion	Antiquity	~300-100 BCE		Maybe	300		2250	100		2050	8 specimens and eggshells	45.350833	36.468611
 Europe	Ukraine	Mirmekija	Antiquity	~300-100 BCE		Maybe	300		2250	100		2050	specimens	45.359757	 36.543657
 Island Southeast Asia	Philippines	Ambangan	N/A	800-1200 CE		No		800	1150		1200	750	numerous specimens	16.36666667	120.86666667
-Island Southeast Asia	Indonesia	Banda Neira, Banda Islands	N/A	post 700 CE		No		700	1250		700	1250	specimens	-4.5167036	129.9030304
+Island Southeast Asia	Philippines	Banda Neira, Banda Islands	N/A	post 700 CE		No		700	1250		700	1250	specimens	-4.5167036	129.9030304
 Mainland Southeast Asia	Thailand	Ban Non Wat	Bronze Age	1006-908 BCE	Directly RCD	Yes	1006		2956	908		2858	1 skeleton	15.274415	102.268896
 Mainland Southeast Asia	Thailand	Ban Non Wat	Late Neolithic and Bronze Age	~1,250-450 BCE		No	1250		3200	450		2400	6 specimens	15.274415	102.268896
 Mainland Southeast Asia	Thailand	Non Nok Tha	Late Neolithic and Bronze Age	~1,400-500 BCE		No	1400		3350	500		2450	1 Individual	16.737194	102.2555
@@ -349,7 +349,7 @@ Micronesia	Mariana Islands	Guam Island, Inarajan village,  Tolofofo River Valley
 Australasia	New Zealand	South Island, Redcliffs School Site	N/A	1650-1805 AD	Directly RCD	Yes		1650	300		1805	145	1 specimen	-43.55922	172.734386
 Australasia	New Zealand	South Island, Mussel Point 	N/A	1652-1938 AD	Directly RCD	Yes		1652	298		1938	12	1 specimen	-43.918694	168.875814
 Australasia	New Zealand	South Island, Fyffe’s Site, Kaikoura	E	1675-1950 AD	Directly RCD	Yes		1675	275		1950	0	1 specimen	-42.4	173.68
-Near Oceania	Papua New Guinea	Watom,  Bismarck Archipelago	Prehistoric Period	1300-1380 CE	Directly RCD	Yes		1300	650		1380	570	1 specimen	-4.115	152.071944
+Near Oceania	Papua New Guinea, Bismarck Archipelago	Watom	Prehistoric Period	1300-1380 CE	Directly RCD	Yes		1300	650		1380	570	1 specimen	-4.115	152.071944
 Northeast Africa	Egypt	Tell Mahskuta	‘Hellenistic’/Ptolemaic periods	~320-200 BCE		Maybe	320		2270	200		2150	2 specimens	30.5529	32.0994
 Northern Africa 	Egypt	Berenike	Ptolemaic Dynasty	305-30 BCE		No	305		2255	30		1980	1 specimen	23.908611	35.4725
 Northern Africa 	Egypt	Tuna el-Gebel (Tomb of Petosiris)	Achaemenid till early Ptolemaic Egypt	~350-305 BCE		Maybe	350		2300	305		2255	depictions	27.781667	30.803889
@@ -437,22 +437,7 @@ Australasia	Australia	Sydney Cove	1788	1788		Yes		1788	162		1788	162	87 specimen
 Northwest Africa	Morocco	Volubilis	Islamic (Phases IIA, IIB)	~780-950 CE		Maybe		780	1170		950	1000	50 specimens	34.071111	-5.553611
 West Africa	Benin	Bernin Lafiya	Phases 3-4	~900-1600 CE		No		900	1050		1600	350	5 specimens	11.978333	3.2225
 West Africa	Mali	Essouk-Tadmekka	Ek-B Horizon 3	~1100-1300 CE		Maybe		1100	850		1300	650	1 specimen	18.75	1.175
-Mainland Southeast Asia	Cambodia	Phum Snay settlement	-	200 BCE-300 CE		No	200		2150		300	1650	6 specimens	13.623972222222223	103.20652777777778
-Europe	Norway	Oslogate 7, Gamlebyen, Oslo	Medieval Period	1150-1600 CE		No		1150	800		1600	350	122 specimens	59.913889	10.752222
-Europe	Norway	Nordre Felt II Gamlebyen, Oslo	Medieval Period	1030-1537 CE		No		1030	920		1537	413	1145 specimens	59.913889	10.752222
-Europe	Norway	Bryggen, Bergen	Medieval Period	1030-1537 CE		No		1030	920		1537	413	661 specimens	60.389444	5.33
-Europe	Norway	Dreggsalmenningen, Bergen	Medieval Period	1170-1527 CE		No		1170	780		1527	423	30 specimens	60.389444	5.33
-Europe	Norway	Kroken 3, Bergen	Medieval Period	1030-1537 CE		No		1030	920		1537	413	2 specimens	60.389444	5.33
-Europe	Norway	Finnegården 3A, Bergen	Medieval Period	1030-1537 CE		No		1030	920		1537	413	22 specimens	60.389444	5.33
-Europe	Norway	Bryggen Gullskoen, Bergen	Medieval Period	1030-1537 CE		No		1030	920		1537	413	15 specimens	60.389444	5.33
-Europe	Norway	Bryggesporden, Bergen	Medieval Period	1030-1537 CE		No		1030	920		1537	413	9 specimens	60.389444	5.33
-Europe	Norway	Storgaten 35, Tønsberg	Medieval Period	Before 1200-1400 CE		No		1030	920		1400	550	58 specimens	59.298056	10.423611
-Europe	Norway	Storgaten 24-26, Tønsberg	Medieval Period	Mid/Late 1200-1350 CE		Maybe		1200	750		1350	600	7 specimens	59.298056	10.423611
-Europe	Norway	Tunsberghus, Tønsberg	Medieval Period	1200-1500 CE		No		1200	750		1500	450	22 specimens	59.298056	10.423611
-Europe	Norway	Baglergaten 2-4, Tønsberg	Medieval Period	c.1200-c.1400 CE		Maybe		1200	750		1400	550	10 specimens	59.298056	10.423611
-Europe	Norway	Blomsøy, Alstahaug	Medieval Period	1030-1537 CE		No		1030	920		1537	413	1 specimen	65.956667	12.572778
-Europe	Norway	Vesle Hjerkinn, Dovre	Medieval Period	1030-1537 CE		No		1030	920		1537	413	23 specimens	62.223056	9.550278
-Europe	Norway	Borgund, Ålesund	Medieval Period	1030-1537 CE		No		1030	920		1537	413	18 specimens	62.466111	6.233611
-Europe	Norway	Erkebispegården, Trondheim	Medieval Period	c.1250-1537 CE		No		1250	700		1537	413	109 specimens	63.4261	10.3945
-Europe	Norway	Televerkstomten, Trondheim	Medieval Period	c.900-1850 CE		No		900	1050		1850	100	1 specimen	63.429722	10.393333
-Central Africa	Mali	Toladié	Phase III/IV	~800-1,400 CE		No		800	1150		1400	550	specimens	14.495833	-4.198611
+Europe	Estonia	Rebala I	Pre-Roman Iron Age	200 BCE - 5 CE	Directly RCD	Yes	200		2150		5	1945	1 specimen	59.45	25.1
+Europe	Estonia	Ilmandu III 	Pre-Viking Age	665-775 CE	Directly RCD	Yes		665	1285		775	1175	5 specimens	59.443889	24.475278
+Europe	Estonia	Iru	Pre-Viking Age/ Viking Age	675-950 CE	Directly RCD	Yes		675	1275		950	1000	1 specimen	59.457519	24.911039
+Europe	Italy	Tomba B. Caprara 38 and Tomba Romagnoli 	Iron Age IIIA	~725-700 BCE		Maybe	725		2675	700		2650	specimens	44.493889	11.342778
