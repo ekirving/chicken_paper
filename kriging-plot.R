@@ -232,8 +232,9 @@ plt.krige <- ggplot() +
     scale_y_continuous(limits = c(ymin, ymax), expand = c(0, 0)) +
 
     # set the colour palette for the Krige surface
-    scale_fill_viridis(name = "BP", na.value = 'gainsboro', option=argv$palette,
-                       limits = c(0, max.age)) +
+    scale_fill_viridis(name = "Years cal. BP", na.value = 'gainsboro', option=argv$palette,
+                       limits = c(0, max.age), breaks=seq(0, max.age, 500),
+                       guide = guide_colourbar(reverse = TRUE, barheight = 20)) +
 
     # use minimal ggplot theme
     theme_bw() +
