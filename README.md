@@ -1,11 +1,14 @@
 # Chickens
-This repository contains R code for plotting Figure 2 from 
-the paper [A comprehensive archaeological assessment of the cultural origins and dispersal of domestic chicken]().
+This repository contains R code for the spatial kriging model used to make *Figure 2* from 
+[The biocultural origins and dispersal of domestic chickens](https://doi.org/10.1073/pnas.2121978119).
 
 ![Figure 2](./figure/Figure_2.png?raw=true)
 
 If you reuse any of this code then please cite the paper:
-> TBD
+> Peters, J., Lebrasseur, O., Irving-Pease, E.K., Paxinos, P.D., Best, J., Smallman, R., Callou, C., Gardeisen, A., 
+> Trixl, S., Frantz, L., Sykes, N., Fuller, D.Q., Larson, G., 2022. The biocultural origins and dispersal of domestic 
+> chickens. *Proceedings of the National Academy of Sciences* 119, e2121978119. https://doi.org/10.1073/pnas.2121978119
+
 
 ## Installation
 Download the code: 
